@@ -227,13 +227,13 @@
     const QUERY_PARAM_CODE = "code";
     const QUERY_PARAM_RESET = "reset";
     // 報酬自動受取の設定
+    // 現在のページURLを定数化
+    const CURRENT_PAGE_URL = `${window.location.origin}${window.location.pathname}`;
     // true にすると、クエリの code= に指定した値をMD5化し、REWARD_AUTO_CODE と比較します。
     // スタンプがすべて揃っていれば自動で報酬を付与します（確認ダイアログなし）。
     // false の場合は従来どおり「商品をもらう」リンクをクリックして受け取る方式を使用します。
     const REWARD_AUTO_CLAIM_ENABLED = false; // 切り替えフラグ
-    //const REWARD_AUTO_CODE = "5a1f3e4c8b2d9f0a7c6e3b1d5f9a2c8e"; // MD5後の値をここに設定してください（例: MD5("reward-secret") = "5a1f3e4c8b2d9f0a7c6e3b1d5f9a2c8e"）
-    const REWARD_AUTO_CODE = CryptoJS.MD5("reward-secret").toString();
-
+    //co)
 
 
     // 各スタンプの設定を1つの配列にまとめます。
@@ -655,18 +655,18 @@
           const reset = url.searchParams.get(QUERY_PARAM_RESET);
 
           if (code) {
-            window.location.href = `${window.location.pathname}?${QUERY_PARAM_CODE}=${encodeURIComponent(code)}`;
+            window.location.href = `${CURRENT_PAGE_URL}?${QUERY_PARAM_CODE}=${encodeURIComponent(code)}`;
           } else if (reset) {
-            window.location.href = `${window.location.pathname}?${QUERY_PARAM_RESET}=${encodeURIComponent(reset)}`;
+            window.location.href = `${CURRENT_PAGE_URL}?${QUERY_PARAM_RESET}=${encodeURIComponent(reset)}`;
           } else {
             showMessage("このQRコードには有効なスタンプ情報が含まれていません。", "warning");
-            }
+          }
         } catch (e) {
           showMessage("無効なQRコードです。", "warning");
-        };
+        }
       };
 
-      $(startButton).on('click', function() {
+      $(startButton).on('click', function () {
         if (isScanning) {
           // スキャン中にボタンが押されたら、スキャンを停止する
           stopScanning();
