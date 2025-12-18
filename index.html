@@ -188,7 +188,7 @@
 </head>
 <body>
 
-  <h1><a href="/">スタンプラリー</a></h1>
+  <h1><a id="home-link" href="/">スタンプラリー</a></h1>
   <p class="description">
     各会場のQRコードを読み取ると、ここにスタンプがたまります。<br>
     同じスマホ・同じブラウザでアクセスすると、スタンプが引き継がれます。
@@ -616,6 +616,9 @@
       if (spotNumber && spotNumber >= 1 && spotNumber <= STAMP_COUNT) {
         triggerShakeByIndex(spotNumber);
       }
+      
+      // ホームリンクのhrefを現在のページURLに設定
+      $("#home-link").attr("href", CURRENT_PAGE_URL);
 
       // ===== QRコードリーダーの初期化 =====
       const qrReaderElement = document.getElementById("qr-reader");
