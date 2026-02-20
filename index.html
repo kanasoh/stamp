@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -184,16 +183,63 @@
       color: #777;
       margin-top: 12px; 
     }
+
+    /* マーキー */
+    .marquee {
+      overflow: hidden;
+      background: #111;
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px 0;
+    }
+
+    .marquee__track {
+      display: flex;
+      width: max-content;
+      will-change: transform;
+      animation: marquee-left 10s linear infinite;
+    }
+
+    .marquee__text {
+      white-space: nowrap;
+      padding-right: 48px; /* 文と文の間隔 */
+      font-size: 14px;
+      letter-spacing: 0.04em;
+    }
+
+    /* 右→左へ流す */
+    @keyframes marquee-left {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* 動きを減らす設定の人への配慮 */
+    @media (prefers-reduced-motion: reduce) {
+      .marquee__track { animation: none; }
+    }
+
   </style>
 </head>
 <body>
 
-  <h1><a id="home-link" href="/">スタンプラリー</a></h1>
+<h1><a id="home-link" href="/">スタンプラリー</a></h1>
+<div class="marquee" aria-live="polite">
+  <div class="marquee__track">
+    <span class="marquee__text">
+      各会場のQRコードを読み取るとスタンプがたまります。
+    </span>
+    <span class="marquee__text" aria-hidden="true">
+      各会場のQRコードを読み取るとスタンプがたまります。
+    </span>
+  </div>
+</div>
+
+  <!--
   <p class="description">
     各会場のQRコードを読み取ると、ここにスタンプがたまります。<br>
     同じスマホ・同じブラウザでアクセスすると、スタンプが引き継がれます。
   </p>
-
+  -->
   <div id="message-area"></div>
 
   <div class="stamp-grid" id="stamp-grid">
@@ -220,7 +266,6 @@
 
   <script>
     // ===== 設定エリア =====
-    const STAMP_COUNT = 12;
     const STORAGE_KEY = "shouou_stamp_2025";
     const EXPIRATION_DAYS = 14; // 14日でリセット
     // クエリパラメータ名を定数化
@@ -247,19 +292,22 @@
     //   - on:   取得済み時に表示する画像URLです。
     // HTMLソース内でここを書き換えてください（0番が No.1 に対応）。
     const STAMP_CONFIGS = [
-      { name: "HPF", link: "https://soudagakkoueikou.com/vf/hpf/", code: "8bddbd3e181329619c54dad4c1ed0e95", off: "https://placehold.co/72x72/cccccc/ffffff?text=1", on: "img/hpf.png" },
-      { name: "第2団体", link: "https://www.yahoo.co.jp", code: "7a1c3e5f9b42", off: "https://placehold.co/72x72/cccccc/ffffff?text=2", on: "https://placehold.co/72x72/16a34a/ffffff?text=2" },
-      { name: "第3団体", link: "", code: "5d8f1a2b7c93", off: "https://placehold.co/72x72/cccccc/ffffff?text=3", on: "https://placehold.co/72x72/16a34a/ffffff?text=3" },
-      { name: "第4団体", link: "", code: "3e9a7c1b5d84", off: "https://placehold.co/72x72/cccccc/ffffff?text=4", on: "https://placehold.co/72x72/16a34a/ffffff?text=4" },
-      { name: "第5団体", link: "", code: "8c2b7a1f3d65", off: "https://placehold.co/72x72/cccccc/ffffff?text=5", on: "https://placehold.co/72x72/16a34a/ffffff?text=5" },
-      { name: "第6団体", link: "", code: "1b7d3f9a2c86", off: "https://placehold.co/72x72/cccccc/ffffff?text=6", on: "https://placehold.co/72x72/16a34a/ffffff?text=6" },
-      { name: "第7団体", link: "", code: "4a9c1b7d3e58", off: "https://placehold.co/72x72/cccccc/ffffff?text=7", on: "https://placehold.co/72x72/16a34a/ffffff?text=7" },
-      { name: "第8団体", link: "", code: "6f1a3c9b7d24", off: "https://placehold.co/72x72/cccccc/ffffff?text=8", on: "https://placehold.co/72x72/16a34a/ffffff?text=8" },
-      { name: "第9団体", link: "", code: "2d7b1a9c3f85", off: "https://placehold.co/72x72/cccccc/ffffff?text=9", on: "https://placehold.co/72x72/16a34a/ffffff?text=9" },
-      { name: "第10団体", link: "", code: "7c3f1a9b2d64", off: "https://placehold.co/72x72/cccccc/ffffff?text=10", on: "https://placehold.co/72x72/16a34a/ffffff?text=10" },
-      { name: "第11団体", link: "", code: "9b1a3d7c5f42", off: "https://placehold.co/72x72/cccccc/ffffff?text=11", on: "https://placehold.co/72x72/16a34a/ffffff?text=11" },
-      { name: "第12団体", link: "", code: "3f7d1a9c5b86", off: "https://placehold.co/72x72/cccccc/ffffff?text=12", on: "https://placehold.co/72x72/16a34a/ffffff?text=12" },
+      { name: "本部", link: "https://soudagakkoueikou.com/steering/headquarter/", code: "8bddbd3e181329619c54dad4c1ed0e95", off: "https://placehold.co/72x72/cccccc/ffffff?text=1", on: "https://placehold.co/72x72/16a34a/ffffff?text=1" },
+      { name: "年次部", link: "https://soudagakkoueikou.com/steering/yearly/", code: "3263d9c2b122c99ed977c43c3a390f17", off: "https://placehold.co/72x72/cccccc/ffffff?text=2", on: "https://placehold.co/72x72/16a34a/ffffff?text=2" },
+      { name: "広報部", link: "https://soudagakkoueikou.com/steering/public/", code: "2ba8a69cf209dadefbbf20b7b64497d4", off: "https://placehold.co/72x72/cccccc/ffffff?text=3", on: "https://placehold.co/72x72/16a34a/ffffff?text=3" },
+      { name: "国際交流部", link: "https://soudagakkoueikou.com/steering/ccc/", code: "5401bbcbf1e80e38a0b9fa7140a43df1", off: "https://placehold.co/72x72/cccccc/ffffff?text=4", on: "https://placehold.co/72x72/16a34a/ffffff?text=4" },
+      { name: "ベンチな人達", link: "https://soudagakkoueikou.com/vf/bench/", code: "0529e6cc0bf71013020f5a06332f56e9", off: "https://placehold.co/72x72/cccccc/ffffff?text=5", on: "https://placehold.co/72x72/16a34a/ffffff?text=5" },
+      { name: "花いっぱい", link: "https://soudagakkoueikou.com/vf/hana/", code: "f3ab0548f1633c963a61d6fc556615c0", off: "https://placehold.co/72x72/cccccc/ffffff?text=6", on: "https://placehold.co/72x72/16a34a/ffffff?text=6" },
+      { name: "ポトラック", link: "https://soudagakkoueikou.com/vf/potluck/", code: "4e23aa1550e74fa4314bd0796d5397a2", off: "https://placehold.co/72x72/cccccc/ffffff?text=7", on: "https://placehold.co/72x72/16a34a/ffffff?text=7" },
+      { name: "バザー", link: "https://soudagakkoueikou.com/vf/bazaar/", code: "289a9fd6bdcb2dbd7f3cdd350a6ea219", off: "https://placehold.co/72x72/cccccc/ffffff?text=8", on: "https://placehold.co/72x72/16a34a/ffffff?text=8" },
+      { name: "映画な人達", link: "https://soudagakkoueikou.com/vf/eiga/", code: "9eb44b9afb0d5d6193e5a8168b7c20e4", off: "https://placehold.co/72x72/cccccc/ffffff?text=9", on: "https://placehold.co/72x72/16a34a/ffffff?text=9" },
+      { name: "歌いっぱい", link: "https://soudagakkoueikou.com/vf/uta/", code: "54a680c80a97bd02a67f6d52a5734e2f", off: "https://placehold.co/72x72/cccccc/ffffff?text=10", on: "https://placehold.co/72x72/16a34a/ffffff?text=10" },
+      { name: "ホームページ", link: "https://soudagakkoueikou.com/vf/hpf/", code: "9a2050cff9df3cf92ad4da7ec0bffc78", off: "https://placehold.co/72x72/cccccc/ffffff?text=11", on: "img/hpf.png"},
+      { name: "着物文化", link: "https://soudagakkoueikou.com/vf/kimono/", code: "31b71d014afd0932f023c52ecbbdea7a", off: "https://placehold.co/72x72/cccccc/ffffff?text=12", on: "https://placehold.co/72x72/16a34a/ffffff?text=12" },
+      { name: "パンダ", link: "https://soudagakkoueikou.com/vf/panda/", code: "2993216f8055347098845bba1e6727b8", off: "https://placehold.co/72x72/cccccc/ffffff?text=13", on: "https://placehold.co/72x72/16a34a/ffffff?text=13" },
     ];
+
+    const STAMP_COUNT = STAMP_CONFIGS.length;
 
     /**
      * トークンからスタンプ番号(1〜N)を検索します。
@@ -418,12 +466,14 @@
             .attr('href', link)
             .attr('target', '_blank')
             .attr('rel', 'noopener')
-            .text("No." + (i + 1) + " " + nameText);
+            //.text("No." + (i + 1) + " " + nameText);
+            .text(nameText);
           $number.append($a);
         } else {
           $number = $("<div>")
             .addClass("stamp-number")
-            .text("No." + (i + 1) + " " + nameText);
+            //.text("No." + (i + 1) + " " + nameText);
+            .text(nameText);
         }
 
         const $imageWrapper = $("<div>").addClass("stamp-image-wrapper");
@@ -592,9 +642,9 @@
           state = addStamp(index, state);
 
           if (already) {
-            showMessage("No." + spotNumber + " のスタンプはすでに取得済みです。", "info");
+            showMessage(STAMP_CONFIGS[index].name + " のスタンプはすでに取得済みです。", "info");
           } else {
-            showMessage("No." + spotNumber + " のスタンプを獲得しました！", "success");
+            showMessage(STAMP_CONFIGS[index].name + " のスタンプを獲得しました！", "success");
           }
         } else {
           showMessage("不正なスタンプコードが指定されました。", "warning");
@@ -615,6 +665,14 @@
       // QRで取得した場合はそのスタンプを震わせてフィードバック
       if (spotNumber && spotNumber >= 1 && spotNumber <= STAMP_COUNT) {
         triggerShakeByIndex(spotNumber);
+
+        // 該当のスタンプまでスクロール（画面下部にある場合などに見逃さないように）
+        const $target = $('.stamp[data-index="' + spotNumber + '"]');
+        if ($target.length) {
+          $('html, body').animate({
+            scrollTop: $target.offset().top - 150
+          }, 600);
+        }
       }
       
       // ホームリンクのhrefを現在のページURLに設定
