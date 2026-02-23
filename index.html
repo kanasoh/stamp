@@ -73,7 +73,7 @@
     const CURRENT_PAGE_URL = `${window.location.origin}${window.location.pathname}`;
     // true にすると、クエリの code= に指定した値をMD5化し、REWARD_AUTO_CODE と比較します。
     // スタンプがすべて揃っていれば自動で報酬を付与します（確認ダイアログなし）。
-    // false の場合は従来どおり「景品」をもらう」リンクをクリックして受け取る方式を使用します。
+    // false の場合は従来どおり「景品をもらう」リンクをクリックして受け取る方式を使用します。
     const REWARD_AUTO_CLAIM_ENABLED = false; // 切り替えフラグ
     
     // 各スタンプの設定を1つの配列にまとめます。
@@ -106,7 +106,7 @@
     //const STAMP_CONFIGS = await fetch('./stamps.json').then(r => r.json());
     const STAMP_COUNT = STAMP_CONFIGS.length;
 
-    // スタンプをいくつ集めたら景品」がもらえるか？
+    // スタンプをいくつ集めたら景品がもらえるか？
     const REWORD_STAMP_NUM = 1;
     //const REWORD_STAMP_NUM = STAMP_CONFIGS.length; // すべてのスタンプが必要な場合
 
@@ -340,18 +340,18 @@
         if (!stateObj) stateObj = loadState();
 
         if (stateObj && stateObj.rewardClaimed) {
-          showMessage("景品」は既に受け取り済みです。", "success","false");
+          showMessage("景品は既に受け取り済みです。", "success","false");
         } else {
         // 自動受取モードが有効な場合は、クリック可能な受取リンクを表示しない
          if (typeof REWARD_AUTO_CLAIM_ENABLED !== 'undefined' && REWARD_AUTO_CLAIM_ENABLED) {
-          showMessage("🎉🎉🎉景品」がもらえます🎉🎉🎉", "success","false");
+          showMessage("🎉🎉🎉景品がもらえます🎉🎉🎉", "success","false");
         } else {
-          const html = '🎉景品」がもらえます🎉　<a href="#" id="claim-reward">係りの人に画面を見せてね</a>';
+          const html = '🎉景品がもらえます🎉　<a href="#" id="claim-reward">係りの人に画面を見せてね</a>';
           showMessage(html, "success","false");
           // ハンドラを設定
           $(document).off('click', '#claim-reward').on('click', '#claim-reward', function (e) {
             e.preventDefault();
-            if (confirm("景品」をもらいますか？\n間違えてクリックした人は「キャンセル」を選んでね！")) {
+            if (confirm("景品をもらいますか？\n間違えてクリックした人は「キャンセル」を選んでね！")) {
               claimReward(stateObj);
             }
           });
@@ -363,12 +363,12 @@
     function claimReward(state) {
       if (!state) state = loadState();
       if (state.rewardClaimed) {
-        showMessage('この端末ではすでに景品」を受け取り済みです。', 'info',"false");
+        showMessage('この端末ではすでに景品を受け取り済みです。', 'info',"false");
         return;
       }
       state.rewardClaimed = true;
       saveState(state);
-      showMessage('景品」をGetしました！参加いただきありがとうございます', 'success',"false");
+      showMessage('景品をGetしました！参加いただきありがとうございます', 'success',"false");
       // メッセージ表示を更新
       renderStampGrid(state.stamps);
     }
@@ -457,9 +457,9 @@
               if (!state.rewardClaimed) {
                 state.rewardClaimed = true;
                 saveState(state);
-                showMessage('景品」GET！スタンプラリーに参加していただきありがとうございます', 'success');
+                showMessage('景品GET！スタンプラリーに参加していただきありがとうございます', 'success');
               } else {
-                showMessage('この端末ではすでに景品」を受け取り済みです。', 'warning');
+                showMessage('この端末ではすでに景品を受け取り済みです。', 'warning');
               }
             } else {
               showMessage('スタンプがすべて揃っていません。', 'warning');
