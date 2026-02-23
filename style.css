@@ -241,7 +241,7 @@ h1 {
   display: flex;
   width: max-content;
   will-change: transform;
-  animation: marquee-left 10s linear infinite;
+  animation: marquee-left 15s linear infinite;
 }
 
 .marquee__text {
