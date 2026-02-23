@@ -1,0 +1,267 @@
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  margin: 0;
+  /*padding: 16px;*/
+  background: #f5f7fb;
+  /* 下部固定ボタンにコンテンツが隠れないように余白を追加 */
+  padding-top: 110px; /* ←高さに合わせて調整 */  
+  padding-bottom: 80px;
+}
+
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  /*width: 100%;*/
+  z-index: 9999;
+
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 0px 0px;
+}
+
+#qr-reader-container {
+  padding: 10px;
+  background-color: #fff;
+  text-align: center;
+  border-top: 1px solid #ddd; /* 上側に境界線 */
+  position: fixed; /* 画面下部に固定 */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+#start-qr-reader {
+  padding: 10px 20px;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#start-qr-reader:hover {
+  background-color: #0056b3;
+}
+
+/* カメラ起動中のボタンスタイル */
+#start-qr-reader.scanning {
+  background-color: #dc3545; /* 赤色に変更 */
+}
+
+#qr-reader {
+  width: 100%;
+  max-width: 500px;
+  margin: 10px auto;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin-top:0px;
+  margin-bottom: 0px;
+  padding-top:15px;
+  padding-bottom:15px;
+  /*margin-bottom: 8px;*/
+  text-align: center;
+  background-color: #FF9719;
+}
+
+#home-link {
+    color: #fff;
+    text-decoration: none;
+}
+
+.credit{
+    font-size: 1.0rem;
+    color: #fff;
+    margin-left: 8px;
+}
+
+.credit a{
+    color: #fff;
+}
+
+
+.description {
+  font-size: 0.9rem;
+  color: #333;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+#message-area {
+  max-width: 600px;
+  margin: 6px auto 6px;
+}
+
+.message {
+  padding: 10px 12px;
+  text-align:center;
+  /*border-radius: 8px;*/
+  font-size: 0.9rem;
+  /*margin-bottom: 8px;*/
+}
+
+.message.info {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.message.success {
+  background: #dcfce7;
+  color: #166534;
+  text-align: center;
+}
+
+.message.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+
+#main-content {
+  margin-top:0px;
+}
+
+#stamp-message {
+
+}
+
+#stamp-message .info {
+  padding: 10px 12px;
+  /* border-radius: 8px;*/
+  font-size: 0.9rem;
+  background: #e0f2fe;
+  color: #0369a1;
+  text-align:center;
+}
+
+#stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 600px;
+  padding-left:16px;
+  padding-right:16px;
+  margin: 12px auto 5px;
+}
+
+.stamp {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  text-align: center;
+  border: 2px dashed #ccc;
+  min-height: 100px; /* min-height: 120px;*/
+}
+
+.stamp-number {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.stamp-image-wrapper {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 4px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stamp-image-wrapper img {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.stamp-label {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.stamp.collected {
+  border-style: solid;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22,163,74,0.15);
+}
+
+.stamp.collected .stamp-label {
+  color: #16a34a;
+  font-weight: bold;
+}
+
+/* スタンプを押したときに少し震えるアニメーション */
+@keyframes stamp-shake {
+  0% { transform: translateY(0) rotate(0deg); }
+  20% { transform: translateY(-3px) rotate(-3deg); }
+  40% { transform: translateY(2px) rotate(2deg); }
+  60% { transform: translateY(-2px) rotate(-1deg); }
+  80% { transform: translateY(1px) rotate(1deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+.stamp.shake .stamp-image-wrapper {
+  animation: stamp-shake 520ms cubic-bezier(.36,.07,.19,.97);
+  will-change: transform;
+}
+
+/* スタンプ番号のリンク表示 */
+.stamp-number a {
+  color: #007bff;
+  text-decoration: underline;
+}
+
+.stamp-number a:hover {
+  text-decoration: underline;
+}
+
+.footer-note {
+  font-size: 0.7rem;
+  text-align: center;
+  color: #777;
+  margin-top: 12px; 
+}
+
+/* マーキー */
+.marquee {
+  overflow: hidden;
+  background: #111;
+  color: #fff;
+  /*border-radius: 8px;*/
+  padding: 10px 0;
+}
+
+.marquee__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marquee-left 10s linear infinite;
+}
+
+.marquee__text {
+  white-space: nowrap;
+  padding-right: 48px; /* 文と文の間隔 */
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+/* 右→左へ流す */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* 動きを減らす設定の人への配慮 */
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track { animation: none; }
+}
