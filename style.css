@@ -233,7 +233,6 @@ h1 {
   overflow: hidden;
   background: #111;
   color: #fff;
-  /*border-radius: 8px;*/
   padding: 10px 0;
 }
 
@@ -241,20 +240,26 @@ h1 {
   display: flex;
   width: max-content;
   will-change: transform;
-  animation: marquee-left 15s linear infinite;
+
+  /* JSが距離と時間をセットする */
+  animation-name: marquee-move;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-duration: var(--marquee-duration, 15s);
+
+  gap: var(--marquee-gap, 48px);
 }
 
 .marquee__text {
   white-space: nowrap;
-  padding-right: 48px; /* 文と文の間隔 */
   font-size: 14px;
   letter-spacing: 0.04em;
 }
 
-/* 右→左へ流す */
-@keyframes marquee-left {
+/* trackを「テキスト1個分 + gap」だけ左に動かす */
+@keyframes marquee-move {
   from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  to   { transform: translateX(calc(-1 * var(--marquee-distance, 300px))); }
 }
 
 /* 動きを減らす設定の人への配慮 */

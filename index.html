@@ -12,17 +12,14 @@
   <div style="background-color:#FF9719;">
   <h1>
     <a id="home-link" href="https://stamp.ganvalue.com/"> スタンプラリー</a>
-    <span class="credit">produced by <a href="https://soudagakkoueikou.com/category/vf/hpf/" target="_blank">HFP</a></span>
+    <span class="credit">produced by <a href="https://soudagakkoueikou.com/category/vf/hpf/" target="_blank">HPF</a></span>
   </h1>
   </div>
 
   <div class="marquee" aria-live="polite">
-    <div class="marquee__track">
-      <span class="marquee__text" id="marquee1">
-        各会場のQRコードを<a href="https://soudagakkoueikou.com">読み取るとスタンプ</a>がたまります。</span>
-      <span class="marquee__text" aria-hidden="true"  id="marquee2">
-        各会場のQRコードを<a href="https://soudagakkoueikou.com">読み取るとスタンプ</a>がたまります。</span>
-      </span>
+    <div class="marquee__track" id="marquee-track">
+      <span class="marquee__text" id="marquee1"></span>
+      <span class="marquee__text" aria-hidden="true" id="marquee2"></span>
     </div>
   </div>
   <div id="message-area"></div>
@@ -30,10 +27,7 @@
 
 <main id="main-content">
   <div id="stamp-message">
-    <div class="info">
-      スタンプ<span id="stamp-count">0</span>個押しました！残り<span id="stamp-remaining">12</span>個です。
-    </div>
-    </div>
+    <div class="info"></div>
   </div>
   <div id="stamp-grid">
     <!-- jQueryで12個分を自動生成 -->
@@ -65,17 +59,28 @@
     // ===== 設定エリア =====
     const STORAGE_KEY = "shouou_stamp_2025";
     const EXPIRATION_DAYS = 14; // 14日でリセット
+
     // クエリパラメータ名を定数化
     const QUERY_PARAM_CODE = "code";
     const QUERY_PARAM_RESET = "reset";
+    
     // 報酬自動受取の設定
     // 現在のページURLを定数化
     const CURRENT_PAGE_URL = `${window.location.origin}${window.location.pathname}`;
-    // true にすると、クエリの code= に指定した値をMD5化し、REWARD_AUTO_CODE と比較します。
-    // スタンプがすべて揃っていれば自動で報酬を付与します（確認ダイアログなし）。
-    // false の場合は従来どおり「景品をもらう」リンクをクリックして受け取る方式を使用します。
-    const REWARD_AUTO_CLAIM_ENABLED = false; // 切り替えフラグ
-    
+
+      // CHECK_COMPLETE_ENABLED
+    // 商品獲得にスタンプ個数を判断し画面に表示する場合はtrue
+    // 商品がない、もしくは判断が不要であればfalse
+    const CHECK_COMPLETE_ENABLED = false; 
+
+    // REWARD_AUTO_CLAIM_ENABLED
+    // true の場合は、係りの確認なしでスタンプが揃った瞬間に景品獲得のメッセージを表示するモードになります。
+    // false の場合は係りが確認してから受け取るよう、確認ダイアログを表示するモードになります。
+    const REWARD_AUTO_CLAIM_ENABLED = false; 
+
+    // マーキーのスピード（px/sec）
+    const MARQUEE_SPEED_SEC = 30;
+        
     // 各スタンプの設定を1つの配列にまとめます。
     // 各要素は { name, link, code, off, on } のオブジェクトです。
     //   - name: スタンプ名として表示されます。
@@ -88,26 +93,26 @@
     // HTMLソース内でここを書き換えてください（0番が No.1 に対応）。
     
     const STAMP_CONFIGS = [
-      { name: "本部", link: "https://soudagakkoueikou.com/category/steering/headquarter/", code: "8bddbd3e181329619c54dad4c1ed0e95", off: "https://placehold.co/72x72/cccccc/ffffff?text=1", on: "https://placehold.co/72x72/16a34a/ffffff?text=1" },
-      { name: "年次部", link: "https://soudagakkoueikou.com/category/steering/yearly/", code: "3263d9c2b122c99ed977c43c3a390f17", off: "https://placehold.co/72x72/cccccc/ffffff?text=2", on: "https://placehold.co/72x72/16a34a/ffffff?text=2" },
-      { name: "広報部", link: "https://soudagakkoueikou.com/category/steering/public/", code: "2ba8a69cf209dadefbbf20b7b64497d4", off: "https://placehold.co/72x72/cccccc/ffffff?text=3", on: "https://placehold.co/72x72/16a34a/ffffff?text=3" },
-      { name: "国際交流部", link: "https://soudagakkoueikou.com/category/steering/ccc/", code: "5401bbcbf1e80e38a0b9fa7140a43df1", off: "https://placehold.co/72x72/cccccc/ffffff?text=4", on: "https://placehold.co/72x72/16a34a/ffffff?text=4" },
-      { name: "ベンチな人達", link: "https://soudagakkoueikou.com/category/vf/bench/", code: "0529e6cc0bf71013020f5a06332f56e9", off: "https://placehold.co/72x72/cccccc/ffffff?text=5", on: "https://placehold.co/72x72/16a34a/ffffff?text=5" },
-      { name: "花いっぱい", link: "https://soudagakkoueikou.com/category/vf/hana/", code: "f3ab0548f1633c963a61d6fc556615c0", off: "https://placehold.co/72x72/cccccc/ffffff?text=6", on: "https://placehold.co/72x72/16a34a/ffffff?text=6" },
-      { name: "ポトラック", link: "https://soudagakkoueikou.com/category/vf/potluck/", code: "4e23aa1550e74fa4314bd0796d5397a2", off: "https://placehold.co/72x72/cccccc/ffffff?text=7", on: "https://placehold.co/72x72/16a34a/ffffff?text=7" },
-      { name: "バザー", link: "https://soudagakkoueikou.com/category/vf/bazaar/", code: "289a9fd6bdcb2dbd7f3cdd350a6ea219", off: "https://placehold.co/72x72/cccccc/ffffff?text=8", on: "https://placehold.co/72x72/16a34a/ffffff?text=8" },
-      { name: "映画な人達", link: "https://soudagakkoueikou.com/category/vf/eiga/", code: "9eb44b9afb0d5d6193e5a8168b7c20e4", off: "https://placehold.co/72x72/cccccc/ffffff?text=9", on: "https://placehold.co/72x72/16a34a/ffffff?text=9" },
-      { name: "歌いっぱい", link: "https://soudagakkoueikou.com/category/vf/uta/", code: "54a680c80a97bd02a67f6d52a5734e2f", off: "https://placehold.co/72x72/cccccc/ffffff?text=10", on: "https://placehold.co/72x72/16a34a/ffffff?text=10" },
-      { name: "ホームページ", link: "https://soudagakkoueikou.com/category/vf/hpf/", code: "9a2050cff9df3cf92ad4da7ec0bffc78", off: "https://placehold.co/72x72/cccccc/ffffff?text=11", on: "img/hpf.png"},
-      { name: "着物文化", link: "https://soudagakkoueikou.com/category/vf/kimono/", code: "31b71d014afd0932f023c52ecbbdea7a", off: "https://placehold.co/72x72/cccccc/ffffff?text=12", on: "https://placehold.co/72x72/16a34a/ffffff?text=12" },
-      { name: "パンダ", link: "https://soudagakkoueikou.com/category/vf/panda/", code: "2993216f8055347098845bba1e6727b8", off: "https://placehold.co/72x72/cccccc/ffffff?text=13", on: "https://placehold.co/72x72/16a34a/ffffff?text=13" },
+      { name: "本部", link: "https://soudagakkoueikou.com/category/steering/headquarter/", code: "8bddbd3e181329619c54dad4c1ed0e95", off: "https://placehold.co/72x72/cccccc/ffffff?text=1", on: "https://placehold.co/72x72/16a34a/ffffff?text=1",msg:"本部は、運営委員会を主催するとともに、ボランティアバンクを含めたパートナーズ全体の活動の調整、連絡にあたります。" },
+      { name: "年次部", link: "https://soudagakkoueikou.com/category/steering/yearly/", code: "3263d9c2b122c99ed977c43c3a390f17", off: "https://placehold.co/72x72/cccccc/ffffff?text=2", on: "https://placehold.co/72x72/16a34a/ffffff?text=2",msg:"年次部は「学校全体に共通な問題の改善と生徒の校内生活の向上を図る」という目標のもと活動しています。" },
+      { name: "広報部", link: "https://soudagakkoueikou.com/category/steering/public/", code: "2ba8a69cf209dadefbbf20b7b64497d4", off: "https://placehold.co/72x72/cccccc/ffffff?text=3", on: "https://placehold.co/72x72/16a34a/ffffff?text=3",msg:"広報部『よいこたちの1番いい瞬間を、1番近くで感じ、広報誌「ざっくばらん」で発信してみませんか？』" },
+      { name: "国際交流部", link: "https://soudagakkoueikou.com/category/steering/ccc/", code: "5401bbcbf1e80e38a0b9fa7140a43df1", off: "https://placehold.co/72x72/cccccc/ffffff?text=4", on: "https://placehold.co/72x72/16a34a/ffffff?text=4",msg:"国際交流部では「国際交流を通して生徒とパートナーズに寄与する活動」をしています。" },
+      { name: "ベンチな人達", link: "https://soudagakkoueikou.com/category/vf/bench/", code: "0529e6cc0bf71013020f5a06332f56e9", off: "https://placehold.co/72x72/cccccc/ffffff?text=5", on: "https://placehold.co/72x72/16a34a/ffffff?text=5",msg:"「ベンチな人達」は、学校で使われるベンチや棚、用具入れなどをDIYで製作・補修するグループです。" },
+      { name: "花いっぱい", link: "https://soudagakkoueikou.com/category/vf/hana/", code: "f3ab0548f1633c963a61d6fc556615c0", off: "https://placehold.co/72x72/cccccc/ffffff?text=6", on: "https://placehold.co/72x72/16a34a/ffffff?text=6" ,msg:"花いっぱいファミリー『校門横の花壇の手入れを中心に活動しています。花好きの皆様、ぜひ一緒に活動しませんか？』"},
+      { name: "ポトラック", link: "https://soudagakkoueikou.com/category/vf/potluck/", code: "4e23aa1550e74fa4314bd0796d5397a2", off: "https://placehold.co/72x72/cccccc/ffffff?text=7", on: "https://placehold.co/72x72/16a34a/ffffff?text=7" ,msg:"私達ポトラックファミリーは、参加者が一品ずつ持ち寄ったお料理やスイーツを頂きながら、ワイワイと美味しく交流を楽しむ会です。"},
+      { name: "バザー", link: "https://soudagakkoueikou.com/category/vf/bazaar/", code: "289a9fd6bdcb2dbd7f3cdd350a6ea219", off: "https://placehold.co/72x72/cccccc/ffffff?text=8", on: "https://placehold.co/72x72/16a34a/ffffff?text=8" ,msg:"バザーファミリーは、毎月1回、楽しくおしゃべりしながら、文化祭で販売する作品作りをしています。"},
+      { name: "映画な人達", link: "https://soudagakkoueikou.com/category/vf/eiga/", code: "9eb44b9afb0d5d6193e5a8168b7c20e4", off: "https://placehold.co/72x72/cccccc/ffffff?text=9", on: "https://placehold.co/72x72/16a34a/ffffff?text=9" ,msg:"「映画な人たち」は、これぞ映画！という作品を厳選して、簡単な解説付きで鑑賞します。"},
+      { name: "歌いっぱい", link: "https://soudagakkoueikou.com/category/vf/uta/", code: "54a680c80a97bd02a67f6d52a5734e2f", off: "https://placehold.co/72x72/cccccc/ffffff?text=10", on: "https://placehold.co/72x72/16a34a/ffffff?text=10" ,msg:"歌いっぱいファミリー『学校や子供のことも話せる仲間と歌って笑って楽しみましょう』"},
+      { name: "ホームページ", link: "https://soudagakkoueikou.com/category/vf/hpf/", code: "9a2050cff9df3cf92ad4da7ec0bffc78", off: "https://placehold.co/72x72/cccccc/ffffff?text=11", on: "img/hpf.png",msg:"ホームページファミリー『ホームページからAIまで！ITで“あたらしいこと”始めませんか？』"},
+      { name: "着物文化", link: "https://soudagakkoueikou.com/category/vf/kimono/", code: "31b71d014afd0932f023c52ecbbdea7a", off: "https://placehold.co/72x72/cccccc/ffffff?text=12", on: "https://placehold.co/72x72/16a34a/ffffff?text=12",msg:"着物文化ファミリーは、“着物”を入り口にして、日本と世界の文化・歴史・民俗・体遣いなどについて、ワイワイ楽しく時には真面目に探求するファミリーです。" },
+      { name: "パンダ", link: "https://soudagakkoueikou.com/category/vf/panda/", code: "2993216f8055347098845bba1e6727b8", off: "https://placehold.co/72x72/cccccc/ffffff?text=13", on: "https://placehold.co/72x72/16a34a/ffffff?text=13",msg:"パンダファミリーは中国の文化を気軽に学び、楽しむボランティアファミリーです。" },
     ];
     
     //const STAMP_CONFIGS = await fetch('./stamps.json').then(r => r.json());
     const STAMP_COUNT = STAMP_CONFIGS.length;
 
     // スタンプをいくつ集めたら景品がもらえるか？
-    const REWORD_STAMP_NUM = 1;
+    const REWORD_STAMP_NUM = 3;
     //const REWORD_STAMP_NUM = STAMP_CONFIGS.length; // すべてのスタンプが必要な場合
 
 
@@ -340,14 +345,14 @@
         if (!stateObj) stateObj = loadState();
 
         if (stateObj && stateObj.rewardClaimed) {
-          showMessage("景品は既に受け取り済みです。", "success","false");
+          showMessage("景品は既に受け取り済みです。", "success", false);
         } else {
         // 自動受取モードが有効な場合は、クリック可能な受取リンクを表示しない
          if (typeof REWARD_AUTO_CLAIM_ENABLED !== 'undefined' && REWARD_AUTO_CLAIM_ENABLED) {
-          showMessage("🎉🎉🎉景品がもらえます🎉🎉🎉", "success","false");
+          showMessage("🎉🎉🎉景品がもらえます🎉🎉🎉", "success", false);
         } else {
           const html = '🎉景品がもらえます🎉　<a href="#" id="claim-reward">係りの人に画面を見せてね</a>';
-          showMessage(html, "success","false");
+          showMessage(html, "success", false);
           // ハンドラを設定
           $(document).off('click', '#claim-reward').on('click', '#claim-reward', function (e) {
             e.preventDefault();
@@ -363,12 +368,12 @@
     function claimReward(state) {
       if (!state) state = loadState();
       if (state.rewardClaimed) {
-        showMessage('この端末ではすでに景品を受け取り済みです。', 'info',"false");
+        showMessage('この端末ではすでに景品を受け取り済みです。', 'info', false);
         return;
       }
       state.rewardClaimed = true;
       saveState(state);
-      showMessage('景品をGetしました！参加いただきありがとうございます', 'success',"false");
+      showMessage('景品をGetしました！参加いただきありがとうございます', 'success', false);
       // メッセージ表示を更新
       renderStampGrid(state.stamps);
     }
@@ -404,17 +409,81 @@
     function updateStampCounters(state) {
       const collected = (state.stamps.match(/1/g) || []).length; // 押印数
       const remaining = STAMP_COUNT - collected;               // 残り
-      $("#stamp-count").text(collected);
-      $("#stamp-remaining").text(remaining);
+      
+      const $stampMessage = $("#stamp-message .info");
+      
+      if (remaining === 0) {
+        // すべてのスタンプが揃った場合
+        $stampMessage.text(STAMP_COUNT + "個すべてのスタンプがそろいました！");
+      } else {
+        // まだスタンプが揃っていない場合
+        //$stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
+        $stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
+      }
     }
 
 
-    $(function () {
+    //const MARQUEE_TEXT = '各会場のQRコードを読み取るとスタンプがたまります。';
+    //const MARQUEE_SPEED_SEC = 20; // smaller = faster
+    /*
+    function setMarquee(text, speedSeconds) {
+      $('#marquee1, #marquee2').html(text);
+      const track = document.getElementById('marquee-track');
+      if (track) track.style.setProperty('--marquee-speed', `${speedSeconds}s`);
+    }
+    */
+    // 速度は px/sec で固定（これが「一定速度」の定義）
+    const MARQUEE_SPEED_PX_PER_SEC = 80; // 小さいほど遅い
+    const MARQUEE_GAP_PX = 48;
 
-      $.get("notice.txt", function(data) {
-        $("#marquee1").html(data);
-        $("#marquee2").html(data);
+    function setMarquee(text, speedPxPerSec = MARQUEE_SPEED_PX_PER_SEC, gapPx = MARQUEE_GAP_PX) {
+      const track = document.getElementById("marquee-track");
+      const m1 = document.getElementById("marquee1");
+      const m2 = document.getElementById("marquee2");
+      if (!track || !m1 || !m2) return;
+
+      // テキスト更新（HTMLを含めたければ innerHTML に変更）
+      m1.textContent = text;
+      m2.textContent = text;
+
+      // gapをCSS変数で反映
+      track.style.setProperty("--marquee-gap", `${gapPx}px`);
+
+      // prefers-reduced-motion の場合は停止
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        track.style.animation = "none";
+        return;
+      }
+
+      // アニメ停止 → 正確に計測 → 再開
+      track.style.animation = "none";
+
+      // レイアウト確定後に計測
+      requestAnimationFrame(() => {
+        const container = track.closest(".marquee");
+        const containerWidth = container ? container.clientWidth : 0;
+
+        // 重要：1個目の実幅（文字数ではなく実ピクセル）
+        const textWidth = m1.scrollWidth;
+
+        // 画面より短いと“動いてる感”が弱いので、最低距離を確保（任意）
+        const baseDistance = textWidth + gapPx;
+        const distance = Math.max(baseDistance, containerWidth + gapPx);
+
+        const duration = distance / speedPxPerSec;
+
+        track.style.setProperty("--marquee-distance", `${distance}px`);
+        track.style.setProperty("--marquee-duration", `${duration}s`);
+
+        // reflowでアニメを確実に再スタート
+        void track.offsetHeight;
+        track.style.animation = "";
       });
+    }
+
+    $(function () {
+      //setMarquee(MARQUEE_TEXT, MARQUEE_SPEED_SEC);
+      setMarquee('各会場のQRコードを読み取るとスタンプがたまります。',MARQUEE_SPEED_SEC);
 
       // 状態ロード（必要なら14日でリセット）
       let state = loadState();
@@ -486,6 +555,11 @@
             showMessage(STAMP_CONFIGS[index].name + " のスタンプはすでに取得済みです。", "warning");
           } else {
             showMessage(STAMP_CONFIGS[index].name + " のスタンプを獲得しました！", "success");
+
+            const marqueeMsg = `${STAMP_CONFIGS[index].msg}`;
+            //setMarquee(marqueeMsg, 15); // 第2引数でスクロール速度(秒)を調整
+            setMarquee(marqueeMsg,MARQUEE_SPEED_SEC);        // 同じ速度
+            // setMarquee(marqueeMsg, 60); // 遅くしたい場合（px/secを下げる）
           }
         } else {
           showMessage("不正なスタンプコードが指定されました。", "warning");
@@ -499,7 +573,9 @@
       updateStampCounters(state);      
 
       // コンプリート判定（state オブジェクトを渡す）
-      checkComplete(state);
+      if (CHECK_COMPLETE_ENABLED) {
+        checkComplete(state);
+      }
 
       // クリックで震えるギミック
       $(document).on('click', '.stamp', function () {
@@ -571,6 +647,12 @@
         }
       };
 
+      /*
+      window.addEventListener("resize", () => {
+        const current = document.getElementById("marquee1")?.textContent ?? "";
+        if (current) setMarquee(current, MARQUEE_SPEED_SEC);
+      });
+      */
       $(startButton).on('click', function () {
         if (isScanning) {
           // スキャン中にボタンが押されたら、スキャンを停止する

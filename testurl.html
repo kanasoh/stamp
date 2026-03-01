@@ -170,34 +170,86 @@
         $qrContainer.append($link);
       });
 
-     // 末尾にリセット用（既存フォーマットと同じ構造で追加）
-     (function() {
-       const url = RESET_URL;
-       const $item = $("<div>").addClass("stamp-item reset");
-       const $title = $("<h3>").text("スタンプをリセット");
-       const $qrContainer = $("<div>").addClass("qr-code").attr("id", "qr-reset");
-       const $link = $("<a>").attr("href", url).attr("target", "_blank").attr("rel", "noopener").text("リンクで開く");
-       $item.append($title, $qrContainer);
-       $container.append($item);
-       new QRCode($qrContainer[0], {
-         text: url,
-         width: 150,
-         height: 150,
-         colorDark: "#000000",
-         colorLight: "#ffffff",
-         correctLevel: QRCode.CorrectLevel.H
-       });
-       $qrContainer.append($link);
-     })();
-    }
+      const $item2 = $("<div>").addClass("stamp-item reset");
+      const $title = $("<h3>").text("スタンプをリセット"); 
+      const $qrContainer = $("<div>").addClass("qr-code").attr("id", "qr-reset");
+      const url = RESET_URL;
 
-    // ページ読み込み時にQRコード生成
-    $(function() {
-      generateStampItems();
+      $item2.append($title, $qrContainer);
+      $container.append($item2);
+
+      const $link = $("<a>").attr("href", url).attr("target", "_blank").attr("rel", "noopener").text("リンクで開く");
+      
+      new QRCode($qrContainer[0], {
+        text: url,
+        width: 150,
+        height: 150,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      $qrContainer.append($link);
 
       // リセットリンクのURLを動的に設定
       $("#reset-link").attr("href", RESET_URL);
-    });
+    }
+
+
+    // 末尾にリセット用（既存フォーマットと同じ構造で追加）
+    (function() {
+
+      generateStampItems();
+
+      // QRコードリンクの一覧をページ下部に表示
+      const $linkList = $("<div>").css({
+        "max-width": "1200px",
+        "margin": "30px auto",
+        "padding": "20px",
+        "background": "white",
+        "border-radius": "8px",
+        "box-shadow": "0 2px 8px rgba(0,0,0,0.1)"
+      });
+
+      const $linkTitle = $("<h2>").text("QRコードリンク一覧").css({
+        "margin-top": "0",
+        "color": "#333"
+      });
+
+      const $linkItems = $("<ul>").css({
+        "list-style": "none",
+        "padding": "0"
+      });
+
+      $.each(STAMPS, function(index, stamp) {
+        const url = BASE_URL + stamp.code;
+        const $li = $("<li>").css({
+          "padding": "8px 0",
+          "border-bottom": "1px solid #eee"
+        });
+        
+        const $a = $("<a>")
+          .attr("href", url)
+          .attr("target", "_blank")
+          .attr("rel", "noopener")
+          // .text(`No.${stamp.number}: ${url}`)
+          .text(`${url}`)
+          .css({
+            "color": "#007bff",
+            "text-decoration": "none",
+            "word-break": "break-all"
+          });
+        
+        $li.append($a);
+        $linkItems.append($li);
+      });
+
+      $linkList.append($linkTitle, $linkItems);
+      $("body").append($linkList);
+
+    })();
+
+    
   </script>
 
 </body>
