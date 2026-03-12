@@ -5,22 +5,141 @@
   <title>登録会向け スタンプラリー</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* ヘッダーのH1右側にアイコン用のスペースを確保 */
+    .fixed-header h1 {
+      text-align: left;
+      padding-left:15px;
+      padding-right: 64px; /* アイコンの幅に応じて調整 */
+    }
+    #reward-status-icon {
+      position: absolute;
+      top: 0;
+      right: 0px; /* 右端からの余白 */
+      height: 100%;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #reward-status-icon img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      padding: 0px;
+      box-sizing: border-box;
+      /*border-radius: 8px;*/ /* 円形から四角（角丸）に変更 */
+      background-color: white;
+      /*box-shadow: 0 1px 3px rgba(0,0,0,0.2);*/
+    }
+
+    /* モーダルスタイル */
+    #reward-modal {
+      display: flex; /* display:flex は常に有効にしておく */
+      position: fixed;
+      z-index: 10001; /* ヘッダーより上 */
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+
+      /* アニメーションのための追加 */
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none; /* クリックイベントを透過させる */
+      transition: opacity 0.3s ease-in-out;
+    }
+    #reward-modal.show {
+      /* アニメーションのための追加 */
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto; /* クリックイベントを受け取る */
+    }
+    .modal-content {
+      background-color: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 90%;
+      width: 320px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+
+      /* アニメーションのための追加 */
+      transform: scale(0.95);
+      transition: transform 0.3s ease-in-out;
+    }
+    /* モーダル表示時にコンテンツを元のサイズに戻す */
+    #reward-modal.show .modal-content {
+      transform: scale(1);
+    }
+    #modal-reward-image {
+      width: 240px;  /* 2倍に拡大 */
+      height: 240px; /* 2倍に拡大 */
+      object-fit: contain;
+      margin-bottom: 16px;
+    }
+    #modal-reward-message {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #333;
+      margin: 0 0 20px 0;
+    }
+    #modal-close-btn {
+      background-color: #666;
+      color: #fff;
+      border: none;
+      padding: 10px 30px;
+      border-radius: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* アイコン用アニメーション定義 */
+    .anim-pulse {
+      animation: pulse-animation 2s infinite ease-in-out;
+    }
+    @keyframes pulse-animation {
+      0% { transform: scale(0.95); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(0.95); }
+    }
+    .anim-bounce {
+      animation: bounce-animation 2s infinite;
+    }
+    @keyframes bounce-animation {
+      0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+      40% {transform: translateY(-6px);}
+      60% {transform: translateY(-3px);}
+    }
+    .anim-float {
+      animation: float-animation 3s infinite ease-in-out;
+    }
+    @keyframes float-animation {
+      0% { transform: translateY(2px); }
+      50% { transform: translateY(-2px); }
+      100% { transform: translateY(2px); }
+    }
+  </style>
 </head>
 <body>
 
 <div class="fixed-header">
-  <div style="background-color:#FF9719;">
-  <h1>
-    <a id="home-link" href="https://stamp.ganvalue.com/"> スタンプラリー</a>
-    <span class="credit">produced by <a href="https://soudagakkoueikou.com/category/vf/hpf/" target="_blank">HPF</a></span>
-  </h1>
-  </div>
-
   <div class="marquee" aria-live="polite">
     <div class="marquee__track" id="marquee-track">
       <span class="marquee__text" id="marquee1"></span>
       <span class="marquee__text" aria-hidden="true" id="marquee2"></span>
     </div>
+  </div>  <div style="background-color:#FF9719; position: relative;">
+  <h1>
+    <a id="home-link" href="https://stamp.ganvalue.com/"> スタンプラリー</a>
+    <span class="credit">produced by <a href="https://soudagakkoueikou.com/category/vf/hpf/" target="_blank">HPF</a></span>
+  </h1>
+  <div id="reward-status-icon"></div>
   </div>
   <div id="message-area"></div>
 </div>
@@ -42,6 +161,15 @@
   <div id="qr-reader-container">
     <button id="start-qr-reader">QRコードを読み取る</button>
     <div id="qr-reader" style="display: none;"></div>
+  </div>
+
+  <!-- 報酬アイコンクリック時のモーダル -->
+  <div id="reward-modal">
+    <div class="modal-content">
+      <img id="modal-reward-image" src="" alt="">
+      <p id="modal-reward-message"></p>
+      <button id="modal-close-btn">閉じる</button>
+    </div>
   </div>
   
   <script type="module">
@@ -81,6 +209,15 @@
     // マーキーのスピード（px/sec）
     const MARQUEE_SPEED_SEC = 30;
         
+    // スタンプ数に応じたヘッダー右のアイコン設定
+    // threshold: この数以上のスタンプで表示。降順で定義してください。
+    const REWARD_STATUS_CONFIG = [
+      { threshold: 12, image: "https://placehold.co/64x64/22c55e/ffffff?text=DONE", message: "コンプリート！おめでとう！" },
+      { threshold: 9, image: "https://placehold.co/64x64/fb923c/ffffff?text=ALMOST", message: "あと少し！" },
+      { threshold: 5, image: "https://placehold.co/64x64/fef08a/333333?text=GOOD", message: "順調！その調子！" },
+      { threshold: 0, image: "https://placehold.co/64x64/efefef/333333?text=START", message: "スタンプを集めよう！" }
+    ];
+
     // 各スタンプの設定を1つの配列にまとめます。
     // 各要素は { name, link, code, off, on } のオブジェクトです。
     //   - name: スタンプ名として表示されます。
@@ -404,6 +541,38 @@
     }
 
     /**
+     * 押印数に応じてヘッダー右のアイコンを更新する
+     */
+    function updateRewardStatusIcon(collectedCount) {
+      const $iconContainer = $("#reward-status-icon");
+      if (!$iconContainer.length) return;
+
+      // 降順にソートされている前提で、最初に見つかったものを適用
+      const configToShow = REWARD_STATUS_CONFIG.find(config => collectedCount >= config.threshold);
+
+      if (configToShow) {
+        const $img = $("<img>")
+          .attr("src", configToShow.image)
+          .attr("alt", configToShow.message)
+          .attr("title", configToShow.message);
+        $iconContainer.empty().append($img);
+
+        // アニメーションクラスを適用
+        if (configToShow.animation) {
+          $img.addClass(`anim-${configToShow.animation}`);
+        }
+
+        // モーダル表示用にデータを保存
+        $iconContainer.data("currentConfig", configToShow);
+        $iconContainer.css("cursor", "pointer");
+      } else {
+        $iconContainer.empty(); // 該当なしの場合は空にする
+        $iconContainer.removeData("currentConfig");
+        $iconContainer.css("cursor", "default");
+      }
+    }
+
+    /**
      * 押印数と残りの数を取得して画面に表示する
      */
     function updateStampCounters(state) {
@@ -420,6 +589,9 @@
         //$stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
         $stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
       }
+
+      // ヘッダーアイコンを更新
+      updateRewardStatusIcon(collected);
     }
 
 
@@ -576,6 +748,23 @@
       if (CHECK_COMPLETE_ENABLED) {
         checkComplete(state);
       }
+
+      // モーダル関連のイベントリスナー
+      $(document).on("click", "#reward-status-icon", function() {
+        const config = $(this).data("currentConfig");
+        if (config) {
+          $("#modal-reward-image").attr("src", config.image);
+          $("#modal-reward-message").text(config.message);
+          $("#reward-modal").addClass("show");
+        }
+      });
+
+      $("#modal-close-btn, #reward-modal").on("click", function(e) {
+        // 背景クリックまたは閉じるボタンで閉じる
+        if (e.target === this || e.target.id === "modal-close-btn") {
+          $("#reward-modal").removeClass("show");
+        }
+      });
 
       // クリックで震えるギミック
       $(document).on('click', '.stamp', function () {
