@@ -60,6 +60,8 @@
   <script src="https://cdn.jsdelivr.net/npm/jquery.marquee@1.6.0/jquery.marquee.min.js"></script>
   <!-- html5-qrcode -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- canvas-confetti (紙吹雪エフェクト) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <script>
     // ===== 設定エリア =====
@@ -90,7 +92,7 @@
     // スタンプ数に応じたヘッダー右のアイコン設定
     // threshold: この数以上のスタンプで表示。降順で定義してください。
     const REWARD_STATUS_CONFIG = [
-      { threshold: 12, image: "https://placehold.co/64x64/22c55e/ffffff?text=DONE", message: "コンプリート！おめでとう！" },
+      { threshold: 13, image: "https://placehold.co/64x64/22c55e/ffffff?text=DONE", message: "コンプリート！おめでとう！" },
       { threshold: 9, image: "https://placehold.co/64x64/fb923c/ffffff?text=ALMOST", message: "あと少し！" },
       { threshold: 5, image: "https://placehold.co/64x64/fef08a/333333?text=GOOD", message: "順調！その調子！" },
       { threshold: 0, image: "https://placehold.co/64x64/efefef/333333?text=START", message: "スタンプを集めよう！" }
@@ -243,6 +245,41 @@
       return state;
     }
 
+    // ===== エフェクト関連 =====
+    function fireConfetti() {
+      // 画面中央から紙吹雪を発射
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+
+    function fireSchoolConfetti() {
+      // コンプリート時などの派手な演出（左右から発射）
+      var duration = 3000;
+      var end = Date.now() + duration;
+
+      (function frame() {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 }
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 }
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
+    }
+
     // ===== UI関連 =====
 
     function showMessage(text, type, autoClear = true) {
@@ -365,9 +402,11 @@
         // 自動受取モードが有効な場合は、クリック可能な受取リンクを表示しない
          if (typeof REWARD_AUTO_CLAIM_ENABLED !== 'undefined' && REWARD_AUTO_CLAIM_ENABLED) {
           showMessage("🎉🎉🎉景品がもらえます🎉🎉🎉", "success", false);
+          fireSchoolConfetti(); // 派手な演出
         } else {
           const html = '🎉景品がもらえます🎉　<a href="#" id="claim-reward">係りの人に画面を見せてね</a>';
           showMessage(html, "success", false);
+          fireSchoolConfetti(); // 派手な演出
           // ハンドラを設定
           $(document).off('click', '#claim-reward').on('click', '#claim-reward', function (e) {
             e.preventDefault();
@@ -513,13 +552,18 @@
       //setMarquee('各会場のQRコードを読み取るとスタンプがたまります。',MARQUEE_SPEED_SEC);
 
       // notice.txt からテキストを読み込んでマーキーに設定
-      $.get('notice.txt')
-        .done(function(data) {
+      $.ajax({
+        url: 'notice.txt',
+        method: 'GET',
+        dataType: 'text',
+        async: false,
+        success: function(data) {
           setMarquee(data, MARQUEE_SPEED_SEC);
-        })
-        .fail(function() {
+        },
+        error: function() {
           setMarquee('各会場のQRコードを読み取るとスタンプがたまります。', MARQUEE_SPEED_SEC);
-        });
+        }
+      });
       
       // 状態ロード（必要なら14日でリセット）
       let state = loadState();
@@ -591,6 +635,8 @@
             showMessage(STAMP_CONFIGS[index].name + " のスタンプはすでに取得済みです。", "warning");
           } else {
             showMessage(STAMP_CONFIGS[index].name + " のスタンプを獲得しました！", "success");
+            //fireConfetti(); // スタンプ取得時の演出
+            //fireSchoolConfetti()
 
             const marqueeMsg = `${STAMP_CONFIGS[index].msg}`;
             //setMarquee(marqueeMsg, 15); // 第2引数でスクロール速度(秒)を調整
