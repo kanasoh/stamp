@@ -17,7 +17,9 @@
   </h1>
   <div id="reward-status-icon"></div>
   </div>
+  <!-- 
   <div id="message-area"></div>
+  -->
 </div>
 
 <main id="main-content">
@@ -94,13 +96,20 @@
     // スタンプ数に応じたヘッダー右のアイコン設定
     // threshold: この数以上のスタンプで表示。降順で定義してください。
     const REWARD_STATUS_CONFIG = [
-      { threshold: 12, image: "img/egg7.webp", message: "ソウダ君を育ててくれてありがとう！" },
-      { threshold: 11, image: "img/egg6.webp", message: "やったー！" },
-      { threshold: 9, image: "img/egg5.webp", message: "あと少しで、うまれますね！" },
-      { threshold: 7, image: "img/egg4.webp", message: "顔がだいぶみえました！" },
-      { threshold: 4, image: "img/egg3.webp", message: "あ、目がみえてきたよ！" },
-      { threshold: 2, image: "img/egg2.webp", message: "ちょっとひび割れてきましたね" },
-      { threshold: 0, image: "img/egg1.webp", message: "ソウダ君を育てよう！" }
+      { threshold: 13, image: "img/egg13.webp", message: "ソウダ君を育ててくれてありがとう！" },
+      { threshold: 12, image: "img/egg12.webp", message: "あと一つのスタンプで完全体になります。" },
+      { threshold: 11, image: "img/egg11.webp", message: "やったー！無事に生まれましたー" },
+      { threshold: 10, image: "img/egg10.webp", message: "次のスタンプで、たまごから出てきそう！" },
+      { threshold: 9, image: "img/egg9.webp", message: "あと少しでうまれそう" },
+      { threshold: 8, image: "img/egg8.webp", message: "次のスタンプで、もっと顔が見れそう！" },
+      { threshold: 7, image: "img/egg7.webp", message: "たまごから顔がだいぶみえました！" },
+      { threshold: 6, image: "img/egg6.webp", message: "次のスタンプで、もう少し顔が見えそう！" },
+      { threshold: 5, image: "img/egg5.webp", message: "きょろきょろと周りを見ているね。" },
+      { threshold: 4, image: "img/egg4.webp", message: "あ、たまごから目がみえてきたよ！" },
+      { threshold: 3, image: "img/egg3.webp", message: "次のスタンプで、たまごがもう少し割れる気がする！" },
+      { threshold: 2, image: "img/egg2.webp", message: "ソウダ君のたまご、ちょっとひび割れてきましたね。" },
+      { threshold: 1, image: "img/egg1.webp", message: "次のスタンプでたまごに変化がありそう！" },
+      { threshold: 0, image: "img/egg0.webp", message: "たまごを育てるためにスタンプを集めよう！" }
     ];
 
     // 各スタンプの設定を1つの配列にまとめます。
@@ -115,19 +124,19 @@
     // HTMLソース内でここを書き換えてください（0番が No.1 に対応）。
     
     const STAMP_CONFIGS = [
-      { name: "本部", link: "https://soudagakkoueikou.com/category/steering/headquarter/", code: "8bddbd3e181329619c54dad4c1ed0e95", off: "https://placehold.co/72x72/cccccc/ffffff?text=1", on: "https://placehold.co/72x72/16a34a/ffffff?text=1",msg:"本部は、運営委員会を主催するとともに、ボランティアバンクを含めたパートナーズ全体の活動の調整、連絡にあたります。" },
-      { name: "年次部", link: "https://soudagakkoueikou.com/category/steering/yearly/", code: "3263d9c2b122c99ed977c43c3a390f17", off: "https://placehold.co/72x72/cccccc/ffffff?text=2", on: "https://placehold.co/72x72/16a34a/ffffff?text=2",msg:"年次部は「学校全体に共通な問題の改善と生徒の校内生活の向上を図る」という目標のもと活動しています。" },
-      { name: "広報部", link: "https://soudagakkoueikou.com/category/steering/public/", code: "2ba8a69cf209dadefbbf20b7b64497d4", off: "https://placehold.co/72x72/cccccc/ffffff?text=3", on: "https://placehold.co/72x72/16a34a/ffffff?text=3",msg:"広報部『よいこたちの1番いい瞬間を、1番近くで感じ、広報誌「ざっくばらん」で発信してみませんか？』" },
-      { name: "国際交流部", link: "https://soudagakkoueikou.com/category/steering/ccc/", code: "5401bbcbf1e80e38a0b9fa7140a43df1", off: "https://placehold.co/72x72/cccccc/ffffff?text=4", on: "https://placehold.co/72x72/16a34a/ffffff?text=4",msg:"国際交流部では「国際交流を通して生徒とパートナーズに寄与する活動」をしています。" },
-      { name: "ベンチな人達", link: "https://soudagakkoueikou.com/category/vf/bench/", code: "0529e6cc0bf71013020f5a06332f56e9", off: "https://placehold.co/72x72/cccccc/ffffff?text=5", on: "https://placehold.co/72x72/16a34a/ffffff?text=5",msg:"「ベンチな人達」は、学校で使われるベンチや棚、用具入れなどをDIYで製作・補修するグループです。" },
-      { name: "花いっぱい", link: "https://soudagakkoueikou.com/category/vf/hana/", code: "f3ab0548f1633c963a61d6fc556615c0", off: "https://placehold.co/72x72/cccccc/ffffff?text=6", on: "https://placehold.co/72x72/16a34a/ffffff?text=6" ,msg:"花いっぱいファミリー『校門横の花壇の手入れを中心に活動しています。花好きの皆様、ぜひ一緒に活動しませんか？』"},
-      { name: "ポトラック", link: "https://soudagakkoueikou.com/category/vf/potluck/", code: "4e23aa1550e74fa4314bd0796d5397a2", off: "https://placehold.co/72x72/cccccc/ffffff?text=7", on: "https://placehold.co/72x72/16a34a/ffffff?text=7" ,msg:"私達ポトラックファミリーは、参加者が一品ずつ持ち寄ったお料理やスイーツを頂きながら、ワイワイと美味しく交流を楽しむ会です。"},
-      { name: "バザー", link: "https://soudagakkoueikou.com/category/vf/bazaar/", code: "289a9fd6bdcb2dbd7f3cdd350a6ea219", off: "https://placehold.co/72x72/cccccc/ffffff?text=8", on: "https://placehold.co/72x72/16a34a/ffffff?text=8" ,msg:"バザーファミリーは、毎月1回、楽しくおしゃべりしながら、文化祭で販売する作品作りをしています。"},
-      { name: "映画な人達", link: "https://soudagakkoueikou.com/category/vf/eiga/", code: "9eb44b9afb0d5d6193e5a8168b7c20e4", off: "https://placehold.co/72x72/cccccc/ffffff?text=9", on: "https://placehold.co/72x72/16a34a/ffffff?text=9" ,msg:"「映画な人たち」は、これぞ映画！という作品を厳選して、簡単な解説付きで鑑賞します。"},
-      { name: "歌いっぱい", link: "https://soudagakkoueikou.com/category/vf/uta/", code: "54a680c80a97bd02a67f6d52a5734e2f", off: "https://placehold.co/72x72/cccccc/ffffff?text=10", on: "https://placehold.co/72x72/16a34a/ffffff?text=10" ,msg:"歌いっぱいファミリー『学校や子供のことも話せる仲間と歌って笑って楽しみましょう』"},
-      { name: "ホームページ", link: "https://soudagakkoueikou.com/category/vf/hpf/", code: "9a2050cff9df3cf92ad4da7ec0bffc78", off: "https://placehold.co/72x72/cccccc/ffffff?text=11", on: "img/hpf.png",msg:"ホームページファミリー『ホームページからAIまで！ITで“あたらしいこと”始めませんか？』"},
-      { name: "着物文化", link: "https://soudagakkoueikou.com/category/vf/kimono/", code: "31b71d014afd0932f023c52ecbbdea7a", off: "https://placehold.co/72x72/cccccc/ffffff?text=12", on: "https://placehold.co/72x72/16a34a/ffffff?text=12",msg:"着物文化ファミリーは、“着物”を入り口にして、日本と世界の文化・歴史・民俗・体遣いなどについて、ワイワイ楽しく時には真面目に探求するファミリーです。" },
-      { name: "パンダ", link: "https://soudagakkoueikou.com/category/vf/panda/", code: "2993216f8055347098845bba1e6727b8", off: "https://placehold.co/72x72/cccccc/ffffff?text=13", on: "https://placehold.co/72x72/16a34a/ffffff?text=13",msg:"パンダファミリーは中国の文化を気軽に学び、楽しむボランティアファミリーです。" },
+      { name: "本部", link: "https://soudagakkoueikou.com/category/steering/headquarter/", code: "8bddbd3e181329619c54dad4c1ed0e95", off: "https://placehold.co/72x72/cccccc/ffffff?text=1", on: "img/headquarter.webp",msg:"本部は、運営委員会を主催するとともに、ボランティアバンクを含めたパートナーズ全体の活動の調整、連絡にあたります。" },
+      { name: "年次部", link: "https://soudagakkoueikou.com/category/steering/yearly/", code: "3263d9c2b122c99ed977c43c3a390f17", off: "https://placehold.co/72x72/cccccc/ffffff?text=2", on: "img/yearly.webp",msg:"年次部は「学校全体に共通な問題の改善と生徒の校内生活の向上を図る」という目標のもと活動しています。" },
+      { name: "広報部", link: "https://soudagakkoueikou.com/category/steering/public/", code: "2ba8a69cf209dadefbbf20b7b64497d4", off: "https://placehold.co/72x72/cccccc/ffffff?text=3", on: "img/public.webp",msg:"広報部『よいこたちの1番いい瞬間を、1番近くで感じ、広報誌「ざっくばらん」で発信してみませんか？』" },
+      { name: "国際交流部", link: "https://soudagakkoueikou.com/category/steering/ccc/", code: "5401bbcbf1e80e38a0b9fa7140a43df1", off: "https://placehold.co/72x72/cccccc/ffffff?text=4", on: "img/ccc.webp",msg:"国際交流部では「国際交流を通して生徒とパートナーズに寄与する活動」をしています。" },
+      { name: "ベンチな人達", link: "https://soudagakkoueikou.com/category/vf/bench/", code: "0529e6cc0bf71013020f5a06332f56e9", off: "https://placehold.co/72x72/cccccc/ffffff?text=5", on: "img/bench.webp",msg:"「ベンチな人達」は、学校で使われるベンチや棚、用具入れなどをDIYで製作・補修するグループです。" },
+      { name: "花いっぱい", link: "https://soudagakkoueikou.com/category/vf/hana/", code: "f3ab0548f1633c963a61d6fc556615c0", off: "https://placehold.co/72x72/cccccc/ffffff?text=6", on: "img/hana.webp" ,msg:"花いっぱいファミリー『校門横の花壇の手入れを中心に活動しています。花好きの皆様、ぜひ一緒に活動しませんか？』"},
+      { name: "ポトラック", link: "https://soudagakkoueikou.com/category/vf/potluck/", code: "4e23aa1550e74fa4314bd0796d5397a2", off: "https://placehold.co/72x72/cccccc/ffffff?text=7", on: "img/potluck.webp" ,msg:"私達ポトラックファミリーは、参加者が一品ずつ持ち寄ったお料理やスイーツを頂きながら、ワイワイと美味しく交流を楽しむ会です。"},
+      { name: "バザー", link: "https://soudagakkoueikou.com/category/vf/bazaar/", code: "289a9fd6bdcb2dbd7f3cdd350a6ea219", off: "https://placehold.co/72x72/cccccc/ffffff?text=8", on: "img/bazaar.webp" ,msg:"バザーファミリーは、毎月1回、楽しくおしゃべりしながら、文化祭で販売する作品作りをしています。"},
+      { name: "映画な人達", link: "https://soudagakkoueikou.com/category/vf/eiga/", code: "9eb44b9afb0d5d6193e5a8168b7c20e4", off: "https://placehold.co/72x72/cccccc/ffffff?text=9", on: "img/eiga.webp" ,msg:"「映画な人たち」は、これぞ映画！という作品を厳選して、簡単な解説付きで鑑賞します。"},
+      { name: "歌いっぱい", link: "https://soudagakkoueikou.com/category/vf/uta/", code: "54a680c80a97bd02a67f6d52a5734e2f", off: "https://placehold.co/72x72/cccccc/ffffff?text=10", on: "img/uta.webp" ,msg:"歌いっぱいファミリー『学校や子供のことも話せる仲間と歌って笑って楽しみましょう』"},
+      { name: "ホームページ", link: "https://soudagakkoueikou.com/category/vf/hpf/", code: "9a2050cff9df3cf92ad4da7ec0bffc78", off: "https://placehold.co/72x72/cccccc/ffffff?text=11", on: "img/hpf.webp",msg:"ホームページファミリー『ホームページからAIまで！ITで“あたらしいこと”始めませんか？』"},
+      { name: "着物文化", link: "https://soudagakkoueikou.com/category/vf/kimono/", code: "31b71d014afd0932f023c52ecbbdea7a", off: "https://placehold.co/72x72/cccccc/ffffff?text=12", on: "img/kimono.webp",msg:"着物文化ファミリーは、“着物”を入り口にして、日本と世界の文化・歴史・民俗・体遣いなどについて、ワイワイ楽しく時には真面目に探求するファミリーです。" },
+      { name: "パンダ", link: "https://soudagakkoueikou.com/category/vf/panda/", code: "2993216f8055347098845bba1e6727b8", off: "https://placehold.co/72x72/cccccc/ffffff?text=13", on: "img/panda.webp",msg:"パンダファミリーは中国の文化を気軽に学び、楽しむボランティアファミリーです。" },
     ];
     
     //const STAMP_CONFIGS = await fetch('./stamps.json').then(r => r.json());
@@ -252,6 +261,15 @@
 
     // ===== エフェクト関連 =====
     function fireConfetti() {
+      if (window.__skipNextConfettiOnce) {
+        window.__skipNextConfettiOnce = false;
+        return;
+      }
+      if (window.__useSchoolConfettiOnce) {
+        window.__useSchoolConfettiOnce = false;
+        fireSchoolConfetti();
+        return;
+      }
       // 画面中央から紙吹雪を発射
       confetti({
         particleCount: 100,
@@ -286,8 +304,10 @@
     }
 
     // ===== UI関連 =====
-
     function showMessage(text, type, autoClear = true) {
+      // マーキーに統一
+      setMarquee(text,MARQUEE_SPEED_SEC);
+      /*
       const $area = $("#message-area");
       const $msg = $("<div>")
         .addClass("message")
@@ -301,12 +321,12 @@
           $msg.fadeOut(200, () => $msg.remove());
         }, 5000);
       }
-
       
       // URLから ?code=XXXX を削除（リロードなし）
       const cleanUrl = window.location.pathname + window.location.hash;
       console.log(cleanUrl);
       window.history.replaceState({}, document.title, cleanUrl);
+      */
     }
 
     /*
@@ -493,20 +513,21 @@
       }
       */
       // ヘッダーアイコンを更新
-      //updateRewardStatusIcon(collected);
-
       const $iconContainer = $("#reward-status-icon");
       if (!$iconContainer.length) return;
 
       // 降順にソートされている前提で、最初に見つかったものを適用
       //const configToShow = REWARD_STATUS_CONFIG.find(config => collectedCount >= config.threshold);
       const configToShow = REWARD_STATUS_CONFIG.find(config => collected >= config.threshold);
+      const previousConfig = $iconContainer.data("currentConfig");
+      const iconChanged = previousConfig && configToShow && previousConfig.image !== configToShow.image;
 
       if (configToShow) {
         const $img = $("<img>")
           .attr("src", configToShow.image)
           .attr("alt", configToShow.message)
-          .attr("title", configToShow.message);
+          .attr("title", configToShow.message)
+          .css("border", iconChanged ? "solid 2px #8b0000" : "solid 2px #FF9719");
         $iconContainer.empty().append($img);
 
         // モーダル表示用にデータを保存
@@ -519,34 +540,7 @@
       }
     }
 
-    /**
-     * 押印数に応じてヘッダー右のアイコンを更新する
-     */
-    /*
-    function updateRewardStatusIcon(collectedCount) {
-      const $iconContainer = $("#reward-status-icon");
-      if (!$iconContainer.length) return;
 
-      // 降順にソートされている前提で、最初に見つかったものを適用
-      const configToShow = REWARD_STATUS_CONFIG.find(config => collectedCount >= config.threshold);
-
-      if (configToShow) {
-        const $img = $("<img>")
-          .attr("src", configToShow.image)
-          .attr("alt", configToShow.message)
-          .attr("title", configToShow.message);
-        $iconContainer.empty().append($img);
-
-        // モーダル表示用にデータを保存
-        $iconContainer.data("currentConfig", configToShow);
-        $iconContainer.css("cursor", "pointer");
-      } else {
-        $iconContainer.empty(); // 該当なしの場合は空にする
-        $iconContainer.removeData("currentConfig");
-        $iconContainer.css("cursor", "default");
-      }
-    }
-    */
     //const MARQUEE_TEXT = '各会場のQRコードを読み取るとスタンプがたまります。';
     //const MARQUEE_SPEED_SEC = 20; // smaller = faster
     /**
@@ -555,7 +549,7 @@
      * @param {string} text 表示するテキスト
      * @param {number} speedPxPerSec 1秒間に進むピクセル数
      */
-    function setMarquee(text, speedPxPerSec) {
+    function setMarquee(text, speedPxPerSec=MARQUEE_SPEED_SEC) {
       const $marquee = $('.marquee');
       if (!$marquee.length) return;
 
@@ -578,8 +572,15 @@
         delayBeforeStart: 0,
         direction: 'left',
         duplicated: true, // 連続して流れるように複製する
-        pauseOnHover: false //マウスを乗せたときの挙動
+        pauseOnHover: true //マウスを乗せたときの挙動
       });
+    }
+
+    function openRewardModal(config) {
+      if (!config) return;
+      $("#modal-reward-image").attr("src", config.image);
+      $("#modal-reward-message").text(config.message);
+      $("#reward-modal").addClass("show");
     }
 
     /*--------------------------------------------------------------------------------
@@ -606,6 +607,7 @@
       
       // 状態ロード（必要なら14日でリセット）
       let state = loadState();
+      let rewardModalTimer = null;
       // let animateRewardIcon = false;
 
       // スタンプの押印数と残り数を更新
@@ -665,6 +667,8 @@
         spotNumber = findStampNumberByToken(code); // 1〜N or null
         if (spotNumber && spotNumber >= 1 && spotNumber <= STAMP_COUNT) {
           const index = spotNumber - 1;
+          const beforeCollected = (state.stamps.match(/1/g) || []).length;
+          const previousRewardConfig = REWARD_STATUS_CONFIG.find(config => beforeCollected >= config.threshold);
           const already = state.stamps.charAt(index) === "1";
           state = addStamp(index, state);
           
@@ -674,14 +678,38 @@
           if (already) {
             showMessage(STAMP_CONFIGS[index].name + " のスタンプはすでに取得済みです。", "warning");
           } else {
-            showMessage("スタンプGET！「"+STAMP_CONFIGS[index].name + "」を見つけた！", "success");
-            fireConfetti(); // スタンプ取得時の演出
-            //fireSchoolConfetti()
+            //showMessage("スタンプGET！「"+STAMP_CONFIGS[index].name + "」を見つけた！", "success");
 
-            const marqueeMsg = `${STAMP_CONFIGS[index].msg}`;
-            //setMarquee(marqueeMsg, 15); // 第2引数でスクロール速度(秒)を調整
-            setMarquee(marqueeMsg,MARQUEE_SPEED_SEC);        // 同じ速度
-            // setMarquee(marqueeMsg, 60); // 遅くしたい場合（px/secを下げる）
+            // ここでマーキー文言を決める
+            const collected = (state.stamps.match(/1/g) || []).length;
+            const remaining = STAMP_COUNT - collected;
+            const configToShow = REWARD_STATUS_CONFIG.find(config => collected >= config.threshold);
+            let marqueeMessage = `スタンプGET！「${STAMP_CONFIGS[index].name}」を見つけた！`;
+
+            if (configToShow && collected === configToShow.threshold) {
+              marqueeMessage += `${configToShow.message}`;
+            }
+
+            marqueeMessage += `残りスタンプは${remaining}こ！`;
+
+            setMarquee(marqueeMessage, MARQUEE_SPEED_SEC);
+
+            let timer = 900;
+            if (collected === STAMP_COUNT){
+              fireSchoolConfetti();// 派手な演出
+              timer = 1200;
+            } else{
+              fireConfetti(); 
+            }
+
+            const rewardImageChanged = !!(previousRewardConfig && configToShow && previousRewardConfig.image !== configToShow.image);
+            if (rewardImageChanged) {
+              if (rewardModalTimer) clearTimeout(rewardModalTimer);
+              rewardModalTimer = setTimeout(function () {
+                openRewardModal(configToShow);
+                rewardModalTimer = null;
+              }, timer);
+            }
           }
         } else {
           showMessage("不正なスタンプコードが指定されました。", "warning");
@@ -703,9 +731,7 @@
       $(document).on("click", "#reward-status-icon", function() {
         const config = $(this).data("currentConfig");
         if (config) {
-          $("#modal-reward-image").attr("src", config.image);
-          $("#modal-reward-message").text(config.message);
-          $("#reward-modal").addClass("show");
+          openRewardModal(config);
         }
       });
 

@@ -167,7 +167,7 @@ body {
   margin: 0 auto 4px;
   border-radius: 50%;
   overflow: hidden;
-  background: #e5e7eb;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -256,6 +256,7 @@ body {
   padding: 0px;
   box-sizing: border-box;
   background-color: white;
+  border: 2px solid #FF9719;
 }
 
 /*
