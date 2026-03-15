@@ -577,10 +577,11 @@
       });
     }
 
-    function openRewardModal(config) {
+    function openRewardModal(config, extraMessage = "") {
       if (!config) return;
+      const modalMessage = extraMessage ? `${extraMessage} ${config.message}` : config.message;
       $("#modal-reward-image").attr("src", config.image);
-      $("#modal-reward-message").text(config.message);
+      $("#modal-reward-message").text(modalMessage);
       $("#reward-modal").addClass("show");
     }
 
@@ -708,7 +709,7 @@
             if (rewardImageChanged) {
               if (rewardModalTimer) clearTimeout(rewardModalTimer);
               rewardModalTimer = setTimeout(function () {
-                openRewardModal(configToShow);
+                openRewardModal(configToShow, `「${STAMP_CONFIGS[index].name}」のスタンプGET！\n`);
                 rewardModalTimer = null;
               }, timer);
             }
