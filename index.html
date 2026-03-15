@@ -70,6 +70,7 @@
   <script>
     // ===== 設定エリア =====
     const STORAGE_KEY = "shouou_stamp_2025";
+    const INTRO_MODAL_SESSION_KEY = "stamp_intro_modal_shown";
     const EXPIRATION_DAYS = 14; // 14日でリセット
 
     // クエリパラメータ名を定数化
@@ -620,6 +621,7 @@
         const val = String(resetParam).toLowerCase();
         if (val === "1" || val === "true" || val === "yes") {
           state = initState();
+          sessionStorage.removeItem(INTRO_MODAL_SESSION_KEY);
           showMessage("デバッグ: スタンプをリセットしました。", "info");
           // リセット指定があるときは同時にcode処理を行わない（誤操作防止）
           skipTokenProcessing = true;
@@ -723,6 +725,18 @@
       updateStampCounters(state);      
 
       // コンプリート判定（state オブジェクトを渡す）
+      const collectedOnLoad = (state.stamps.match(/1/g) || []).length;
+      const introShown = sessionStorage.getItem(INTRO_MODAL_SESSION_KEY) === "1";
+      if (collectedOnLoad === 0 && !introShown) {
+        const introConfig = REWARD_STATUS_CONFIG.find(config => config.threshold === 0);
+        if (introConfig) {
+          sessionStorage.setItem(INTRO_MODAL_SESSION_KEY, "1");
+          setTimeout(function () {
+            openRewardModal(introConfig);
+          }, 1500);
+        }
+      }
+
       if (CHECK_COMPLETE_ENABLED) {
         checkComplete(state);
       }
