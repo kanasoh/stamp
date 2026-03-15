@@ -21,9 +21,11 @@
 </div>
 
 <main id="main-content">
+  <!--
   <div id="stamp-message">
     <div class="info"></div>
   </div>
+  -->
   <div id="stamp-grid">
     <!-- jQueryで12個分を自動生成 -->
   </div>
@@ -92,10 +94,13 @@
     // スタンプ数に応じたヘッダー右のアイコン設定
     // threshold: この数以上のスタンプで表示。降順で定義してください。
     const REWARD_STATUS_CONFIG = [
-      { threshold: 13, image: "https://placehold.co/64x64/22c55e/ffffff?text=DONE", message: "コンプリート！おめでとう！" },
-      { threshold: 9, image: "https://placehold.co/64x64/fb923c/ffffff?text=ALMOST", message: "あと少し！" },
-      { threshold: 5, image: "https://placehold.co/64x64/fef08a/333333?text=GOOD", message: "順調！その調子！" },
-      { threshold: 0, image: "https://placehold.co/64x64/efefef/333333?text=START", message: "スタンプを集めよう！" }
+      { threshold: 12, image: "img/egg7.webp", message: "ソウダ君を育ててくれてありがとう！" },
+      { threshold: 11, image: "img/egg6.webp", message: "やったー！" },
+      { threshold: 9, image: "img/egg5.webp", message: "あと少しで、うまれますね！" },
+      { threshold: 7, image: "img/egg4.webp", message: "顔がだいぶみえました！" },
+      { threshold: 4, image: "img/egg3.webp", message: "あ、目がみえてきたよ！" },
+      { threshold: 2, image: "img/egg2.webp", message: "ちょっとひび割れてきましたね" },
+      { threshold: 0, image: "img/egg1.webp", message: "ソウダ君を育てよう！" }
     ];
 
     // 各スタンプの設定を1つの配列にまとめます。
@@ -315,7 +320,10 @@
       $area.empty().append($msg);
     }
     */
-
+    /*
+     * スタンプの状態を受け取って、スタンプグリッドを再描画します。
+      stamps: "0" と "1" の文字列（例: "110010..."）
+    */
     function renderStampGrid(stamps) {
       const $grid = $("#stamp-grid");
       $grid.empty();
@@ -376,7 +384,9 @@
         $grid.append($stamp);
       }
     }
-
+    /*
+    * スタンプの状態を受け取って、景品獲得条件を満たしているかチェックし、満たしていれば受取リンクを表示します。
+    */
     function checkComplete(st) {
       // 引数は文字列（stamps）か、stateオブジェクトのどちらかで渡される可能性がある。
       // まずそれを正しく扱うために文字列を抽出する。
@@ -419,6 +429,9 @@
     }
   }
 
+    /*
+    * 景品受け取り処理。stateオブジェクトを受け取る（ない場合はロードする）。rewardClaimedフラグを立てて保存し、受取完了のメッセージを表示する。
+    */
     function claimReward(state) {
       if (!state) state = loadState();
       if (state.rewardClaimed) {
@@ -460,6 +473,56 @@
     /**
      * 押印数に応じてヘッダー右のアイコンを更新する
      */
+    function updateStampCounters(state) {
+      const collected = (state.stamps.match(/1/g) || []).length; // 押印数
+      /*
+      const remaining = STAMP_COUNT - collected;               // 残り
+      const $stampMessage = $("#stamp-message .info");
+      const configToShow = REWARD_STATUS_CONFIG.find(config => collected >= config.threshold);
+      const message = configToShow ? configToShow.message : `エラー：キャラクター成長用のメッセージが見つかりません`;
+      $stampMessage.text(message);
+
+      if (remaining === 0) {
+        // すべてのスタンプが揃った場合
+        $stampMessage.text(STAMP_COUNT + "個すべてのスタンプがそろいました！");
+        $stampMessage.text(STAMP_COUNT + "個すべてのスタンプがそろいました！");
+      } else {
+        // まだスタンプが揃っていない場合
+        //$stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
+        $stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
+      }
+      */
+      // ヘッダーアイコンを更新
+      //updateRewardStatusIcon(collected);
+
+      const $iconContainer = $("#reward-status-icon");
+      if (!$iconContainer.length) return;
+
+      // 降順にソートされている前提で、最初に見つかったものを適用
+      //const configToShow = REWARD_STATUS_CONFIG.find(config => collectedCount >= config.threshold);
+      const configToShow = REWARD_STATUS_CONFIG.find(config => collected >= config.threshold);
+
+      if (configToShow) {
+        const $img = $("<img>")
+          .attr("src", configToShow.image)
+          .attr("alt", configToShow.message)
+          .attr("title", configToShow.message);
+        $iconContainer.empty().append($img);
+
+        // モーダル表示用にデータを保存
+        $iconContainer.data("currentConfig", configToShow);
+        $iconContainer.css("cursor", "pointer");
+      } else {
+        $iconContainer.empty(); // 該当なしの場合は空にする
+        $iconContainer.removeData("currentConfig");
+        $iconContainer.css("cursor", "default");
+      }
+    }
+
+    /**
+     * 押印数に応じてヘッダー右のアイコンを更新する
+     */
+    /*
     function updateRewardStatusIcon(collectedCount) {
       const $iconContainer = $("#reward-status-icon");
       if (!$iconContainer.length) return;
@@ -474,11 +537,6 @@
           .attr("title", configToShow.message);
         $iconContainer.empty().append($img);
 
-        // アニメーションクラスを適用
-        if (configToShow.animation) {
-          $img.addClass(`anim-${configToShow.animation}`);
-        }
-
         // モーダル表示用にデータを保存
         $iconContainer.data("currentConfig", configToShow);
         $iconContainer.css("cursor", "pointer");
@@ -488,30 +546,7 @@
         $iconContainer.css("cursor", "default");
       }
     }
-
-    /**
-     * 押印数と残りの数を取得して画面に表示する
-     */
-    function updateStampCounters(state) {
-      const collected = (state.stamps.match(/1/g) || []).length; // 押印数
-      const remaining = STAMP_COUNT - collected;               // 残り
-      
-      const $stampMessage = $("#stamp-message .info");
-      
-      if (remaining === 0) {
-        // すべてのスタンプが揃った場合
-        $stampMessage.text(STAMP_COUNT + "個すべてのスタンプがそろいました！");
-      } else {
-        // まだスタンプが揃っていない場合
-        //$stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
-        $stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
-      }
-
-      // ヘッダーアイコンを更新
-      updateRewardStatusIcon(collected);
-    }
-
-
+    */
     //const MARQUEE_TEXT = '各会場のQRコードを読み取るとスタンプがたまります。';
     //const MARQUEE_SPEED_SEC = 20; // smaller = faster
     /**
@@ -543,20 +578,24 @@
         delayBeforeStart: 0,
         direction: 'left',
         duplicated: true, // 連続して流れるように複製する
-        pauseOnHover: true
+        pauseOnHover: false //マウスを乗せたときの挙動
       });
     }
 
+    /*--------------------------------------------------------------------------------
+     * ページ読み込み時の初期化処理
+    --------------------------------------------------------------------------------*/  
     $(function () {
       //setMarquee(MARQUEE_TEXT, MARQUEE_SPEED_SEC);
       //setMarquee('各会場のQRコードを読み取るとスタンプがたまります。',MARQUEE_SPEED_SEC);
 
       // notice.txt からテキストを読み込んでマーキーに設定
       $.ajax({
-        url: 'notice.txt',
+        url: `notice.txt?v=${Date.now()}`,
         method: 'GET',
         dataType: 'text',
         async: false,
+        cache: false,
         success: function(data) {
           setMarquee(data, MARQUEE_SPEED_SEC);
         },
@@ -567,6 +606,7 @@
       
       // 状態ロード（必要なら14日でリセット）
       let state = loadState();
+      // let animateRewardIcon = false;
 
       // スタンプの押印数と残り数を更新
       updateStampCounters(state);      
@@ -629,13 +669,13 @@
           state = addStamp(index, state);
           
           // スタンプの押印数と残り数を更新
-          updateStampCounters(state);      
+          // animateRewardIcon = true;      
 
           if (already) {
             showMessage(STAMP_CONFIGS[index].name + " のスタンプはすでに取得済みです。", "warning");
           } else {
-            showMessage(STAMP_CONFIGS[index].name + " のスタンプを獲得しました！", "success");
-            //fireConfetti(); // スタンプ取得時の演出
+            showMessage("スタンプGET！「"+STAMP_CONFIGS[index].name + "」を見つけた！", "success");
+            fireConfetti(); // スタンプ取得時の演出
             //fireSchoolConfetti()
 
             const marqueeMsg = `${STAMP_CONFIGS[index].msg}`;
