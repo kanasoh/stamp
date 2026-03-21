@@ -12,7 +12,7 @@
   <div class="marquee"></div>
   <div style="background-color:#FF9719; position: relative;">
   <h1>
-    <a id="home-link" href="https://stamp.ganvalue.com/"> スタンプラリー</a>
+    <a id="home-link" href="/"> スタンプラリー</a>
     <span class="credit">produced by <a href="https://soudagakkoueikou.com/category/vf/hpf/" target="_blank">HPF</a></span>
   </h1>
   <div id="reward-status-icon"></div>
@@ -404,6 +404,31 @@
         $stamp.append($number, $imageWrapper);
         $grid.append($stamp);
       }
+
+      // 固定枠を末尾に追加
+      const fixedStamps = [
+        { name: "ﾊﾟｰﾄﾅｰｽﾞとは？", img: "img/soudalogo.webp", link: "https://soudagakkoueikou.com/about/"},
+        { name: "ｱﾝｹｰﾄのお願い", img: "img/survey.webp", link: "https://forms.gle/9QqjEFnFVHvwtSTR9" }
+      ];
+
+      fixedStamps.forEach(fs => {
+        const $item = $("<div>").addClass("stamp collected fixed-stamp");
+
+        let $num;
+        if (fs.link) {
+          $num = $("<div>").addClass("stamp-number");
+          const $a = $("<a>").attr("href", fs.link).attr("target", "_blank").attr("rel", "noopener").text(fs.name);
+          $num.append($a);
+        } else {
+          $num = $("<div>").addClass("stamp-number").text(fs.name);
+        }
+
+        const $imgWrap = $("<div>").addClass("stamp-image-wrapper");
+        const $img = $("<img>").attr("src", fs.img).attr("alt", fs.name);
+        $imgWrap.append($img);
+        $item.append($num, $imgWrap);
+        $grid.append($item);
+      });
     }
     /*
     * スタンプの状態を受け取って、景品獲得条件を満たしているかチェックし、満たしていれば受取リンクを表示します。

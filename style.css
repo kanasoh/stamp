@@ -134,7 +134,8 @@ body {
 }
 */
 
-#stamp-grid {
+#stamp-grid,
+#fixed-stamp-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
@@ -142,6 +143,10 @@ body {
   padding-left:16px;
   padding-right:16px;
   margin: 12px auto 5px;
+}
+
+#fixed-stamp-grid {
+  margin-top: 0;
 }
 
 .stamp {
@@ -339,4 +344,15 @@ body {
   cursor: pointer;
   outline: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* 固定枠用のスタイル追加 */
+.stamp.fixed-stamp {
+  /*background-color: #fffde7;*/ /* 薄いクリーム色 */
+  border-color: #fdd835;     /* 黄色っぽい枠線 */
+}
+
+.stamp.fixed-stamp .stamp-number {
+  color: #333;
+  border-radius: 4px;
 }
