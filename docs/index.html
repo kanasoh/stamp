@@ -617,23 +617,30 @@
       //setMarquee(MARQUEE_TEXT, MARQUEE_SPEED_SEC);
       //setMarquee('各会場のQRコードを読み取るとスタンプがたまります。',MARQUEE_SPEED_SEC);
 
-      // notice.txt からテキストを読み込んでマーキーに設定
-      $.ajax({
-        url: `notice.txt?v=${Date.now()}`,
-        method: 'GET',
-        dataType: 'text',
-        async: false,
-        cache: false,
-        success: function(data) {
-          setMarquee(data, MARQUEE_SPEED_SEC);
-        },
-        error: function() {
-          setMarquee('各会場のQRコードを読み取るとスタンプがたまります。', MARQUEE_SPEED_SEC);
-        }
-      });
-      
       // 状態ロード（必要なら14日でリセット）
       let state = loadState();
+
+      // コンプリート済みかどうかでマーキーの表示内容を分岐
+      const collectedForMarquee = (state.stamps.match(/1/g) || []).length;
+      if (collectedForMarquee === STAMP_COUNT) {
+        setMarquee('すべてのスタンプを押してくれてありがとうございました！', MARQUEE_SPEED_SEC);
+      } else {
+        // notice.txt からテキストを読み込んでマーキーに設定
+        $.ajax({
+          url: `notice.txt?v=${Date.now()}`,
+          method: 'GET',
+          dataType: 'text',
+          async: false,
+          cache: false,
+          success: function(data) {
+            setMarquee(data, MARQUEE_SPEED_SEC);
+          },
+          error: function() {
+            setMarquee('各会場のQRコードを読み取るとスタンプがたまります。', MARQUEE_SPEED_SEC);
+          }
+        });
+      }
+      
       let rewardModalTimer = null;
       // let animateRewardIcon = false;
 
