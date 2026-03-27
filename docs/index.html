@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>登録会向け スタンプラリー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="fixed-header">
+  <div class="marquee"></div>
+  <div style="background-color:#FF9719; position: relative;">
+  <h1>
+    <a id="home-link" href="/"> スタンプラリー</a>
+    <span class="credit">produced by <a href="https://soudagakkoueikou.com/category/vf/hpf/" target="_blank">HPF</a></span>
+  </h1>
+  <div id="reward-status-icon"></div>
+  </div>
+  <!-- 
+  <div id="message-area"></div>
+  -->
+</div>
+
+<main id="main-content">
+  <!--
+  <div id="stamp-message">
+    <div class="info"></div>
+  </div>
+  -->
+  <div id="stamp-grid">
+    <!-- jQueryで12個分を自動生成 -->
+  </div>
+<!--
+  <p class="footer-note">
+    ※ブラウザの履歴やサイトデータを削除するとスタンプも消えます。<br>
+    ※別の端末・別のブラウザではスタンプは引き継がれません。
+  </p>
+-->
+  <!-- QRコードリーダーUI (bodyの末尾に移動) -->
+  <div id="qr-reader-container">
+    <button id="start-qr-reader">QRコードを読み取る</button>
+    <div id="qr-reader" style="display: none;"></div>
+  </div>
+
+  <!-- 報酬アイコンクリック時のモーダル -->
+  <div id="reward-modal">
+    <div class="modal-content">
+      <img id="modal-reward-image" src="" alt="">
+      <p id="modal-reward-message"></p>
+      <button id="modal-close-btn">閉じる</button>
+    </div>
+  </div>
+  
+  <script type="module">
+  // window.STAMP_CONFIGS = await fetch('./stamps.json').then(r => r.json());
+  </script>
+
+  <!-- jQuery（CDN） -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- CryptoJS（MD5用） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <!-- jQuery Marquee Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery.marquee@1.6.0/jquery.marquee.min.js"></script>
+  <!-- html5-qrcode -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- canvas-confetti (紙吹雪エフェクト) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    // ===== 設定エリア =====
+    const STORAGE_KEY = "shouou_stamp_2025";
+    const INTRO_MODAL_SESSION_KEY = "stamp_intro_modal_shown";
+    const EXPIRATION_DAYS = 14; // 14日でリセット
+
+    // クエリパラメータ名を定数化
+    const QUERY_PARAM_CODE = "code";
+    const QUERY_PARAM_RESET = "reset";
+    
+    // 報酬自動受取の設定
+    // 現在のページURLを定数化
+    const CURRENT_PAGE_URL = `${window.location.origin}${window.location.pathname}`;
+
+      // CHECK_COMPLETE_ENABLED
+    // 商品獲得にスタンプ個数を判断し画面に表示する場合はtrue
+    // 商品がない、もしくは判断が不要であればfalse
+    const CHECK_COMPLETE_ENABLED = false; 
+
+    // REWARD_AUTO_CLAIM_ENABLED
+    // true の場合は、係りの確認なしでスタンプが揃った瞬間に景品獲得のメッセージを表示するモードになります。
+    // false の場合は係りが確認してから受け取るよう、確認ダイアログを表示するモードになります。
+    const REWARD_AUTO_CLAIM_ENABLED = false; 
+
+    // マーキーのスピード（px/sec）
+    const MARQUEE_SPEED_SEC = 30;
+        
+    // スタンプ数に応じたヘッダー右のアイコン設定
+    // threshold: この数以上のスタンプで表示。降順で定義してください。
+    const REWARD_STATUS_CONFIG = [
+      { threshold: 13, image: "img/egg13.webp", message: "パートナーズの魅力を伝えなきゃ！" },
+      { threshold: 12, image: "img/egg12.webp", message: "はじめまして！ぼくソウダ君！" },
+      { threshold: 11, image: "img/egg11.webp", message: "わーい！無事たまごから外に出れたよ！" },
+      { threshold: 10, image: "img/egg10.webp", message: "こんにちは！元気に生まれたね！" },
+      { threshold: 9, image: "img/egg9.webp", message: "あっ！殻から出てきたよ！" },
+      { threshold: 8, image: "img/egg8.webp", message: "ついに上の殻が取れたね！" },
+      { threshold: 7, image: "img/egg7.webp", message: "すごく頑張ってるよ！あとちょっと！" },
+      { threshold: 6, image: "img/egg6.webp", message: "またヒビが広がったみたい……！" },
+      { threshold: 5, image: "img/egg5.webp", message: "頭が見えてきた！がんばれがんばれ！" },
+      { threshold: 4, image: "img/egg4.webp", message: "よいしょ、よいしょ……外に出たいみたいだよ！" },
+      { threshold: 3, image: "img/egg3.webp", message: "中の子、こっちを見ているみたい……！" },
+      { threshold: 2, image: "img/egg2.webp", message: "ちょっと割れたね！中にいるのは誰かな…？" },
+      { threshold: 1, image: "img/egg1.webp", message: "あれっ？たまごにヒビが……！" },
+      { threshold: 0, image: "img/egg0.webp", message: "スタンプを集めてたまごを育てよう！" }
+    ];
+
+    // 各スタンプの設定を1つの配列にまとめます。
+    // 各要素は { name, link, code, off, on } のオブジェクトです。
+    //   - name: スタンプ名として表示されます。
+    //   - link: スタンプ名に設定されるリンクURLです（任意）。
+    //   - code: スタンプを識別するためのユニークなコードです。
+    //           QRコードから読み取った値と照合されます。
+    //           "s1_..." のようなプレフィックス付きの平文、またはMD5ハッシュ値を直接指定できます。
+    //   - off:  未取得時に表示する画像URLです。
+    //   - on:   取得済み時に表示する画像URLです。
+    // HTMLソース内でここを書き換えてください（0番が No.1 に対応）。
+    
+    const STAMP_CONFIGS = [
+      { name: "本部", link: "https://soudagakkoueikou.com/category/steering/headquarter/", code: "8bddbd3e181329619c54dad4c1ed0e95", off: "https://placehold.co/72x72/cccccc/ffffff?text=1", on: "img/headquarter.webp",msg:"本部は、運営委員会を主催するとともに、ボランティアバンクを含めたパートナーズ全体の活動の調整、連絡にあたります。" },
+      { name: "年次部", link: "https://soudagakkoueikou.com/category/steering/yearly/", code: "3263d9c2b122c99ed977c43c3a390f17", off: "https://placehold.co/72x72/cccccc/ffffff?text=2", on: "img/yearly.webp",msg:"年次部は「学校全体に共通な問題の改善と生徒の校内生活の向上を図る」という目標のもと活動しています。" },
+      { name: "広報部", link: "https://soudagakkoueikou.com/category/steering/public/", code: "2ba8a69cf209dadefbbf20b7b64497d4", off: "https://placehold.co/72x72/cccccc/ffffff?text=3", on: "img/public.webp",msg:"広報部『よいこたちの1番いい瞬間を、1番近くで感じ、広報誌「ざっくばらん」で発信してみませんか？』" },
+      { name: "国際交流部", link: "https://soudagakkoueikou.com/category/steering/ccc/", code: "5401bbcbf1e80e38a0b9fa7140a43df1", off: "https://placehold.co/72x72/cccccc/ffffff?text=4", on: "img/ccc.webp",msg:"国際交流部では「国際交流を通して生徒とパートナーズに寄与する活動」をしています。" },
+      { name: "ベンチな人達", link: "https://soudagakkoueikou.com/category/vf/bench/", code: "0529e6cc0bf71013020f5a06332f56e9", off: "https://placehold.co/72x72/cccccc/ffffff?text=5", on: "img/bench.webp",msg:"「ベンチな人達」は、学校で使われるベンチや棚、用具入れなどをDIYで製作・補修するグループです。" },
+      { name: "花いっぱい", link: "https://soudagakkoueikou.com/category/vf/hana/", code: "f3ab0548f1633c963a61d6fc556615c0", off: "https://placehold.co/72x72/cccccc/ffffff?text=6", on: "img/hana.webp" ,msg:"花いっぱいファミリー『校門横の花壇の手入れを中心に活動しています。花好きの皆様、ぜひ一緒に活動しませんか？』"},
+      { name: "ポトラック", link: "https://soudagakkoueikou.com/category/vf/potluck/", code: "4e23aa1550e74fa4314bd0796d5397a2", off: "https://placehold.co/72x72/cccccc/ffffff?text=7", on: "img/potluck.webp" ,msg:"私達ポトラックファミリーは、参加者が一品ずつ持ち寄ったお料理やスイーツを頂きながら、ワイワイと美味しく交流を楽しむ会です。"},
+      { name: "バザー", link: "https://soudagakkoueikou.com/category/vf/bazaar/", code: "289a9fd6bdcb2dbd7f3cdd350a6ea219", off: "https://placehold.co/72x72/cccccc/ffffff?text=8", on: "img/bazaar.webp" ,msg:"バザーファミリーは、毎月1回、楽しくおしゃべりしながら、文化祭で販売する作品作りをしています。"},
+      { name: "映画な人達", link: "https://soudagakkoueikou.com/category/vf/eiga/", code: "9eb44b9afb0d5d6193e5a8168b7c20e4", off: "https://placehold.co/72x72/cccccc/ffffff?text=9", on: "img/eiga.webp" ,msg:"「映画な人たち」は、これぞ映画！という作品を厳選して、簡単な解説付きで鑑賞します。"},
+      { name: "歌いっぱい", link: "https://soudagakkoueikou.com/category/vf/uta/", code: "54a680c80a97bd02a67f6d52a5734e2f", off: "https://placehold.co/72x72/cccccc/ffffff?text=10", on: "img/uta.webp" ,msg:"歌いっぱいファミリー『学校や子供のことも話せる仲間と歌って笑って楽しみましょう』"},
+      { name: "ホームページ", link: "https://soudagakkoueikou.com/category/vf/hpf/", code: "9a2050cff9df3cf92ad4da7ec0bffc78", off: "https://placehold.co/72x72/cccccc/ffffff?text=11", on: "img/hpf.webp",msg:"ホームページファミリー『ホームページからAIまで！ITで“あたらしいこと”始めませんか？』"},
+      { name: "着物文化", link: "https://soudagakkoueikou.com/category/vf/kimono/", code: "31b71d014afd0932f023c52ecbbdea7a", off: "https://placehold.co/72x72/cccccc/ffffff?text=12", on: "img/kimono.webp",msg:"着物文化ファミリーは、“着物”を入り口にして、日本と世界の文化・歴史・民俗・体遣いなどについて、ワイワイ楽しく時には真面目に探求するファミリーです。" },
+      { name: "パンダ", link: "https://soudagakkoueikou.com/category/vf/panda/", code: "2993216f8055347098845bba1e6727b8", off: "https://placehold.co/72x72/cccccc/ffffff?text=13", on: "img/panda.webp",msg:"パンダファミリーは中国の文化を気軽に学び、楽しむボランティアファミリーです。" },
+    ];
+    
+    //const STAMP_CONFIGS = await fetch('./stamps.json').then(r => r.json());
+    const STAMP_COUNT = STAMP_CONFIGS.length;
+
+    // スタンプをいくつ集めたら景品がもらえるか？
+    const REWORD_STAMP_NUM = 3;
+    //const REWORD_STAMP_NUM = STAMP_CONFIGS.length; // すべてのスタンプが必要な場合
+
+
+    /**
+     * トークンからスタンプ番号(1〜N)を検索します。
+     * STAMP_CONFIGS の各要素に `code` を設定してください。
+     */
+    function findStampNumberByToken(code) {
+      if (!code) return null;
+      // CryptoJS must be available (loaded via CDN). Compute MD5 of incoming code.
+      if (typeof CryptoJS === 'undefined' || !CryptoJS.MD5) {
+        console.warn('CryptoJS not available; cannot match MD5 tokens.');
+        return null;
+      }
+
+      // Normalize incoming code: strip optional prefix like "s1_" (case-insensitive)
+      const originalCode = String(code);
+      const normalizedCode = originalCode.replace(/^s\d+_/i, '');
+      const hashed = CryptoJS.MD5(normalizedCode).toString();
+      const hashedOriginal = CryptoJS.MD5(originalCode).toString();
+
+      for (let i = 0; i < STAMP_CONFIGS.length; i++) {
+        const cfg = STAMP_CONFIGS[i] || {};
+
+        // cfg.code は、ハッシュ化される前の平文か、MD5ハッシュ値のどちらかです。
+        if (cfg.code && typeof cfg.code === 'string') {
+          const cfgStr = String(cfg.code);
+          // 32文字の16進数であれば、MD5ハッシュ値として扱う
+          if (/^[a-f0-9]{32}$/i.test(cfgStr)) {
+            const cfgToken = cfgStr.toLowerCase();
+            if (cfgToken === hashed || cfgToken === hashedOriginal) return i + 1;
+          } else {
+            // 平文の場合: ハッシュ化して比較
+            const cfgHash = CryptoJS.MD5(cfgStr).toString();
+            if (cfgHash === hashed || cfgHash === hashedOriginal) return i + 1;
+          }
+        }
+      }
+      return null;
+    }
+
+    // ===== ユーティリティ =====
+
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+
+    function nowMs() {
+      return Date.now();
+    }
+
+    function daysToMs(days) {
+      return days * 24 * 60 * 60 * 1000;
+    }
+
+    // ===== localStorage管理 =====
+
+    function initState() {
+      const obj = {
+        stamps: "0".repeat(STAMP_COUNT),
+        updatedAt: nowMs(),
+        // 報酬受け取り済みフラグ（端末ごと）
+        rewardClaimed: false
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+      return obj;
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const now = nowMs();
+
+      if (!raw) return initState();
+
+      try {
+        const obj = JSON.parse(raw);
+
+        if (
+          !obj ||
+          typeof obj.stamps !== "string" ||
+          obj.stamps.length !== STAMP_COUNT ||
+          typeof obj.updatedAt !== "number"
+        ) {
+          return initState();
+        }
+
+        // 以前のバージョンには存在しない場合があるので既定値を補う
+        if (typeof obj.rewardClaimed !== 'boolean') obj.rewardClaimed = false;
+
+        if (now - obj.updatedAt > daysToMs(EXPIRATION_DAYS)) {
+          // 有効期限切れ → リセット
+          return initState();
+        }
+        return obj;
+      } catch (e) {
+        // 破損していたらリセット
+        return initState();
+      }
+    }
+
+    function saveState(state) {
+      state.updatedAt = nowMs();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function addStamp(index, state) {
+      // index: 0〜11
+      const chars = state.stamps.split("");
+      chars[index] = "1";
+      state.stamps = chars.join("");
+      saveState(state);
+      return state;
+    }
+
+    // ===== エフェクト関連 =====
+    function fireConfetti() {
+      if (window.__skipNextConfettiOnce) {
+        window.__skipNextConfettiOnce = false;
+        return;
+      }
+      if (window.__useSchoolConfettiOnce) {
+        window.__useSchoolConfettiOnce = false;
+        fireSchoolConfetti();
+        return;
+      }
+      // 画面中央から紙吹雪を発射
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+
+    function fireSchoolConfetti() {
+      // コンプリート時などの派手な演出（左右から発射）
+      var duration = 3000;
+      var end = Date.now() + duration;
+
+      (function frame() {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 }
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 }
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
+    }
+
+    // ===== UI関連 =====
+    function showMessage(text, type, autoClear = true) {
+      // マーキーに統一
+      setMarquee(text,MARQUEE_SPEED_SEC);
+      /*
+      const $area = $("#message-area");
+      const $msg = $("<div>")
+        .addClass("message")
+        .addClass(type || "info")
+        .html(text);
+      $area.empty().append($msg);
+
+      // 数秒後に自動で消す（5秒なら 5000）
+      if(autoClear===true){
+        setTimeout(() => {
+          $msg.fadeOut(200, () => $msg.remove());
+        }, 5000);
+      }
+      
+      // URLから ?code=XXXX を削除（リロードなし）
+      const cleanUrl = window.location.pathname + window.location.hash;
+      console.log(cleanUrl);
+      window.history.replaceState({}, document.title, cleanUrl);
+      */
+    }
+
+    /*
+    // HTML を受け取るメッセージ（リンク等を挿入する場合に使用）
+    function showHtmlMessage(html, type) {
+      const $area = $("#message-area");
+      const $msg = $("<div>")
+        .addClass("message")
+        .addClass(type || "info")
+        .html(html);
+      $area.empty().append($msg);
+    }
+    */
+    /*
+     * スタンプの状態を受け取って、スタンプグリッドを再描画します。
+      stamps: "0" と "1" の文字列（例: "110010..."）
+    */
+    function renderStampGrid(stamps) {
+      const $grid = $("#stamp-grid");
+      $grid.empty();
+
+      for (let i = 0; i < STAMP_COUNT; i++) {
+        const collected = stamps.charAt(i) === "1";
+
+        const $stamp = $("<div>")
+          .addClass("stamp")
+          .toggleClass("collected", collected)
+          .attr("data-index", i + 1);
+
+        // 各スタンプの設定をまとめた STAMP_CONFIGS を参照
+        const cfg = (Array.isArray(STAMP_CONFIGS) && STAMP_CONFIGS[i]) ? STAMP_CONFIGS[i] : {};
+        const nameText = cfg.name || "";
+        const link = cfg.link || "";
+
+        let $number;
+        if (link) {
+          $number = $("<div>").addClass("stamp-number");
+          const $a = $("<a>")
+            .attr('href', link)
+            .attr('target', '_blank')
+            .attr('rel', 'noopener')
+            //.text("No." + (i + 1) + " " + nameText);
+            .text(nameText);
+          $number.append($a);
+        } else {
+          $number = $("<div>")
+            .addClass("stamp-number")
+            //.text("No." + (i + 1) + " " + nameText);
+            .text(nameText);
+        }
+
+        const $imageWrapper = $("<div>").addClass("stamp-image-wrapper");
+        const imgSrc = collected
+          ? (cfg.on || "")
+          : (cfg.off || "");
+
+        const $img = $("<img>")
+          .attr("alt", collected ? "取得済みスタンプ" : "未取得スタンプ");
+
+        if (imgSrc) {
+          $img.attr("src", imgSrc);
+        } else {
+          // 画像パスが未設定の場合の簡易表示（枠だけ使う）
+          $img.css({ opacity: 0 });
+        }
+
+        $imageWrapper.append($img);
+
+        const $label = $("<div>")
+          .addClass("stamp-label")
+          .text(collected ? "GET!" : "未取得");
+
+        //$stamp.append($number, $imageWrapper, $label);
+        $stamp.append($number, $imageWrapper);
+        $grid.append($stamp);
+      }
+
+      // 固定枠を末尾に追加
+      const fixedStamps = [
+        { name: "ﾊﾟｰﾄﾅｰｽﾞとは？", img: "img/soudalogo.webp", link: "https://soudagakkoueikou.com/about/"},
+        { name: "ｱﾝｹｰﾄのお願い", img: "img/survey.webp", link: "https://forms.gle/9QqjEFnFVHvwtSTR9" }
+      ];
+
+      fixedStamps.forEach(fs => {
+        const $item = $("<div>").addClass("stamp collected fixed-stamp");
+
+        let $num;
+        if (fs.link) {
+          $num = $("<div>").addClass("stamp-number");
+          const $a = $("<a>").attr("href", fs.link).attr("target", "_blank").attr("rel", "noopener").text(fs.name);
+          $num.append($a);
+        } else {
+          $num = $("<div>").addClass("stamp-number").text(fs.name);
+        }
+
+        const $imgWrap = $("<div>").addClass("stamp-image-wrapper");
+        const $img = $("<img>").attr("src", fs.img).attr("alt", fs.name);
+        $imgWrap.append($img);
+        $item.append($num, $imgWrap);
+        $grid.append($item);
+      });
+    }
+    /*
+    * スタンプの状態を受け取って、景品獲得条件を満たしているかチェックし、満たしていれば受取リンクを表示します。
+    */
+    function checkComplete(st) {
+      // 引数は文字列（stamps）か、stateオブジェクトのどちらかで渡される可能性がある。
+      // まずそれを正しく扱うために文字列を抽出する。
+      let stampsStr = null;
+      let stateObj = null;
+
+      if (st && typeof st === 'object' && typeof st.stamps === 'string') {
+        stateObj = st;
+        stampsStr = st.stamps;
+      } else if (typeof st === 'string') {
+        stampsStr = st;
+      }
+
+      // stampsStr が "0" を含まない＝すべてのスタンプが押されている状態をチェック
+      const collectedCount = (stampsStr.match(/1/g) || []).length;
+      if (stampsStr && stampsStr.length > 0 && collectedCount >= REWORD_STAMP_NUM) {
+        // stateObj がない場合は保存された状態を読み込んで rewardClaimed を確認する
+        if (!stateObj) stateObj = loadState();
+
+        if (stateObj && stateObj.rewardClaimed) {
+          showMessage("景品は既に受け取り済みです。", "success", false);
+        } else {
+        // 自動受取モードが有効な場合は、クリック可能な受取リンクを表示しない
+         if (typeof REWARD_AUTO_CLAIM_ENABLED !== 'undefined' && REWARD_AUTO_CLAIM_ENABLED) {
+          showMessage("🎉🎉🎉景品がもらえます🎉🎉🎉", "success", false);
+          fireSchoolConfetti(); // 派手な演出
+        } else {
+          const html = '🎉景品がもらえます🎉　<a href="#" id="claim-reward">係りの人に画面を見せてね</a>';
+          showMessage(html, "success", false);
+          fireSchoolConfetti(); // 派手な演出
+          // ハンドラを設定
+          $(document).off('click', '#claim-reward').on('click', '#claim-reward', function (e) {
+            e.preventDefault();
+            if (confirm("景品をもらいますか？\n間違えてクリックした人は「キャンセル」を選んでね！")) {
+              claimReward(stateObj);
+            }
+          });
+        }
+      }
+    }
+  }
+
+    /*
+    * 景品受け取り処理。stateオブジェクトを受け取る（ない場合はロードする）。rewardClaimedフラグを立てて保存し、受取完了のメッセージを表示する。
+    */
+    function claimReward(state) {
+      if (!state) state = loadState();
+      if (state.rewardClaimed) {
+        showMessage('この端末ではすでに景品を受け取り済みです。', 'info', false);
+        return;
+      }
+      state.rewardClaimed = true;
+      saveState(state);
+      showMessage('景品をGetしました！参加いただきありがとうございます', 'success', false);
+      // メッセージ表示を更新
+      renderStampGrid(state.stamps);
+    }
+
+    // 震えるギミック用ユーティリティ
+    function triggerShake($stamp) {
+      if (!$stamp || !$stamp.length) return;
+      // remove then re-add to retrigger animation when clicked multiple times
+      $stamp.removeClass('shake');
+      // small timeout to allow reflow so animation restarts
+      setTimeout(function () {
+        $stamp.addClass('shake');
+      }, 10);
+
+      // cleanup after animation ends (fallback timeout)
+      $stamp.one('animationend webkitAnimationEnd', function () {
+        $stamp.removeClass('shake');
+      });
+
+      setTimeout(function () {
+        $stamp.removeClass('shake');
+      }, 800);
+    }
+
+    function triggerShakeByIndex(index) {
+      var $s = $('.stamp[data-index="' + index + '"]');
+      if ($s.length) triggerShake($s);
+    }
+
+    /**
+     * 押印数に応じてヘッダー右のアイコンを更新する
+     */
+    function updateStampCounters(state) {
+      const collected = (state.stamps.match(/1/g) || []).length; // 押印数
+      /*
+      const remaining = STAMP_COUNT - collected;               // 残り
+      const $stampMessage = $("#stamp-message .info");
+      const configToShow = REWARD_STATUS_CONFIG.find(config => collected >= config.threshold);
+      const message = configToShow ? configToShow.message : `エラー：キャラクター成長用のメッセージが見つかりません`;
+      $stampMessage.text(message);
+
+      if (remaining === 0) {
+        // すべてのスタンプが揃った場合
+        $stampMessage.text(STAMP_COUNT + "個すべてのスタンプがそろいました！");
+        $stampMessage.text(STAMP_COUNT + "個すべてのスタンプがそろいました！");
+      } else {
+        // まだスタンプが揃っていない場合
+        //$stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
+        $stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
+      }
+      */
+      // ヘッダーアイコンを更新
+      const $iconContainer = $("#reward-status-icon");
+      if (!$iconContainer.length) return;
+
+      // 降順にソートされている前提で、最初に見つかったものを適用
+      //const configToShow = REWARD_STATUS_CONFIG.find(config => collectedCount >= config.threshold);
+      const configToShow = REWARD_STATUS_CONFIG.find(config => collected >= config.threshold);
+      const previousConfig = $iconContainer.data("currentConfig");
+      const iconChanged = previousConfig && configToShow && previousConfig.image !== configToShow.image;
+
+      if (configToShow) {
+        const $img = $("<img>")
+          .attr("src", configToShow.image)
+          .attr("alt", configToShow.message)
+          .attr("title", configToShow.message)
+          .css("border", iconChanged ? "solid 2px #8b0000" : "solid 2px #FF9719");
+        $iconContainer.empty().append($img);
+
+        // モーダル表示用にデータを保存
+        $iconContainer.data("currentConfig", configToShow);
+        $iconContainer.css("cursor", "pointer");
+      } else {
+        $iconContainer.empty(); // 該当なしの場合は空にする
+        $iconContainer.removeData("currentConfig");
+        $iconContainer.css("cursor", "default");
+      }
+    }
+
+
+    //const MARQUEE_TEXT = '各会場のQRコードを読み取るとスタンプがたまります。';
+    //const MARQUEE_SPEED_SEC = 20; // smaller = faster
+    /**
+     * マーキーのテキストと速度を設定します。
+     * jquery.marquee.min.js を使用します。
+     * @param {string} text 表示するテキスト
+     * @param {number} speedPxPerSec 1秒間に進むピクセル数
+     */
+    function setMarquee(text, speedPxPerSec=MARQUEE_SPEED_SEC) {
+      const $marquee = $('.marquee');
+      if (!$marquee.length) return;
+
+      // 以前のインスタンスがあれば破棄
+      if ($marquee.data('marquee')) {
+        $marquee.marquee('destroy');
+      }
+
+      // テキストを更新
+      $marquee.text(text);
+
+      // 速度を px/sec から プラグインの speed (ms/px) に変換
+      // 例: 30px/sec -> 1000ms / 30px = 33.33 ms/px
+      const speedMsPerPixel = 1000 / speedPxPerSec;
+
+      // プラグインを初期化
+      $marquee.marquee({
+        speed: speedMsPerPixel,
+        gap: 50,
+        delayBeforeStart: 0,
+        direction: 'left',
+        duplicated: true, // 連続して流れるように複製する
+        pauseOnHover: true //マウスを乗せたときの挙動
+      });
+    }
+
+    function openRewardModal(config, extraMessage = "") {
+      if (!config) return;
+      const modalMessage = extraMessage ? `${extraMessage} ${config.message}` : config.message;
+      $("#modal-reward-image").attr("src", config.image);
+      $("#modal-reward-message").text(modalMessage);
+      $("#reward-modal").addClass("show");
+    }
+
+    /*--------------------------------------------------------------------------------
+     * ページ読み込み時の初期化処理
+    --------------------------------------------------------------------------------*/  
+    $(function () {
+      //setMarquee(MARQUEE_TEXT, MARQUEE_SPEED_SEC);
+      //setMarquee('各会場のQRコードを読み取るとスタンプがたまります。',MARQUEE_SPEED_SEC);
+
+      // 状態ロード（必要なら14日でリセット）
+      let state = loadState();
+
+      // コンプリート済みかどうかでマーキーの表示内容を分岐
+      const collectedForMarquee = (state.stamps.match(/1/g) || []).length;
+      if (collectedForMarquee === STAMP_COUNT) {
+        setMarquee('すべてのスタンプを押してくれてありがとうございました！', MARQUEE_SPEED_SEC);
+      } else {
+        // notice.txt からテキストを読み込んでマーキーに設定
+        $.ajax({
+          url: `notice.txt?v=${Date.now()}`,
+          method: 'GET',
+          dataType: 'text',
+          async: false,
+          cache: false,
+          success: function(data) {
+            setMarquee(data, MARQUEE_SPEED_SEC);
+          },
+          error: function() {
+            setMarquee('各会場のQRコードを読み取るとスタンプがたまります。', MARQUEE_SPEED_SEC);
+          }
+        });
+      }
+      
+      let rewardModalTimer = null;
+      // let animateRewardIcon = false;
+
+      // スタンプの押印数と残り数を更新
+      updateStampCounters(state);      
+
+      // デバッグ用: URLクエリでリセットできるようにする (?reset=1 or ?reset=true)
+      const resetParam = getQueryParam(QUERY_PARAM_RESET);
+      let skipTokenProcessing = false;
+      if (resetParam) {
+        const val = String(resetParam).toLowerCase();
+        if (val === "1" || val === "true" || val === "yes") {
+          state = initState();
+          sessionStorage.removeItem(INTRO_MODAL_SESSION_KEY);
+          showMessage("デバッグ: スタンプをリセットしました。", "info");
+          // リセット指定があるときは同時にcode処理を行わない（誤操作防止）
+          skipTokenProcessing = true;
+        }
+      }
+      // QRコードからのアクセスかチェック（?code=xxx）
+      const code = getQueryParam(QUERY_PARAM_CODE);
+      let spotNumber = null;
+
+      // まず自動報酬受け取りモードが有効かつ code が指定されている場合の処理
+      if (code && REWARD_AUTO_CLAIM_ENABLED) {
+        if (typeof CryptoJS !== 'undefined' && CryptoJS.MD5) {
+          const codeHash = CryptoJS.MD5(String(code)).toString();
+          // REWARREWUTO_CODE は MD5後の値を設定する想定。
+          // ただし運用上、受け取った code が既にハッシュ値の場合もあるため
+          // 以下のどちらかを満たせば一致と見なす:
+          //  - codeHash === REWARD_AUTO_CODE  (code が平文 -> ハッシュ化して比較)
+          //  - String(code) === REWARD_AUTO_CODE (code がすでにハッシュ値)
+          const directMatch = String(code) === REWARD_AUTO_CODE;
+          const hashMatch = codeHash === REWARD_AUTO_CODE;
+          console.debug('Reward auto-check', { code, codeHash, REWARD_AUTO_CODE, directMatch, hashMatch });
+
+          if (directMatch || hashMatch) {
+            // 指定されたリワード用 code でアクセスされたときの自動付与処理
+            if (state && typeof state.stamps === 'string' && !state.stamps.includes('0')) {
+              if (!state.rewardClaimed) {
+                state.rewardClaimed = true;
+                saveState(state);
+                showMessage('景品GET！スタンプラリーに参加していただきありがとうございます', 'success');
+              } else {
+                showMessage('この端末ではすでに景品を受け取り済みです。', 'warning');
+              }
+            } else {
+              showMessage('スタンプがすべて揃っていません。', 'warning');
+            }
+            // 自動付与コードに一致したら、通常のスタンプ処理は行わない
+            skipTokenProcessing = true;
+          }
+        } else {
+          console.warn('CryptoJS not available; cannot perform reward auto-check');
+        }
+      }
+
+      if (!skipTokenProcessing && code) {
+        spotNumber = findStampNumberByToken(code); // 1〜N or null
+        if (spotNumber && spotNumber >= 1 && spotNumber <= STAMP_COUNT) {
+          const index = spotNumber - 1;
+          const beforeCollected = (state.stamps.match(/1/g) || []).length;
+          const previousRewardConfig = REWARD_STATUS_CONFIG.find(config => beforeCollected >= config.threshold);
+          const already = state.stamps.charAt(index) === "1";
+          state = addStamp(index, state);
+          
+          // スタンプの押印数と残り数を更新
+          // animateRewardIcon = true;      
+
+          if (already) {
+            showMessage(STAMP_CONFIGS[index].name + " のスタンプはすでに取得済みです。", "warning");
+          } else {
+            //showMessage("スタンプGET！「"+STAMP_CONFIGS[index].name + "」を見つけた！", "success");
+
+            // ここでマーキー文言を決める
+            const collected = (state.stamps.match(/1/g) || []).length;
+            const remaining = STAMP_COUNT - collected;
+            const configToShow = REWARD_STATUS_CONFIG.find(config => collected >= config.threshold);
+            let marqueeMessage = `スタンプGET！「${STAMP_CONFIGS[index].name}」を見つけた！`;
+
+            if (configToShow && collected === configToShow.threshold) {
+              marqueeMessage += `${configToShow.message}`;
+            }
+
+            marqueeMessage += `残りスタンプは${remaining}こ！`;
+
+            setMarquee(marqueeMessage, MARQUEE_SPEED_SEC);
+
+            let timer = 900;
+            if (collected === STAMP_COUNT){
+              fireSchoolConfetti();// 派手な演出
+              timer = 1200;
+            } else{
+              fireConfetti(); 
+            }
+
+            const rewardImageChanged = !!(previousRewardConfig && configToShow && previousRewardConfig.image !== configToShow.image);
+            if (rewardImageChanged) {
+              if (rewardModalTimer) clearTimeout(rewardModalTimer);
+              rewardModalTimer = setTimeout(function () {
+                openRewardModal(configToShow, `「${STAMP_CONFIGS[index].name}」のスタンプGET！\n`);
+                rewardModalTimer = null;
+              }, timer);
+            }
+          }
+        } else {
+          showMessage("不正なスタンプコードが指定されました。", "warning");
+        }
+      }
+
+      // グリッド描画
+      renderStampGrid(state.stamps);
+
+      // スタンプの押印数と残り数を更新
+      updateStampCounters(state);      
+
+      // コンプリート判定（state オブジェクトを渡す）
+      const collectedOnLoad = (state.stamps.match(/1/g) || []).length;
+      const introShown = sessionStorage.getItem(INTRO_MODAL_SESSION_KEY) === "1";
+      if (collectedOnLoad === 0 && !introShown) {
+        const introConfig = REWARD_STATUS_CONFIG.find(config => config.threshold === 0);
+        if (introConfig) {
+          sessionStorage.setItem(INTRO_MODAL_SESSION_KEY, "1");
+          setTimeout(function () {
+            openRewardModal(introConfig);
+          }, 1500);
+        }
+      }
+
+      if (CHECK_COMPLETE_ENABLED) {
+        checkComplete(state);
+      }
+
+      // モーダル関連のイベントリスナー
+      $(document).on("click", "#reward-status-icon", function() {
+        const config = $(this).data("currentConfig");
+        if (config) {
+          openRewardModal(config);
+        }
+      });
+
+      $("#modal-close-btn, #reward-modal").on("click", function(e) {
+        // 背景クリックまたは閉じるボタンで閉じる
+        if (e.target === this || e.target.id === "modal-close-btn") {
+          $("#reward-modal").removeClass("show");
+        }
+      });
+
+      // クリックで震えるギミック
+      $(document).on('click', '.stamp', function () {
+        triggerShake($(this));
+      });
+
+      // QRで取得した場合はそのスタンプを震わせてフィードバック
+      if (spotNumber && spotNumber >= 1 && spotNumber <= STAMP_COUNT) {
+        triggerShakeByIndex(spotNumber);
+
+        // 該当のスタンプまでスクロール（画面下部にある場合などに見逃さないように）
+        const $target = $('.stamp[data-index="' + spotNumber + '"]');
+        if ($target.length) {
+          $('html, body').animate({
+            scrollTop: $target.offset().top - 150
+          }, 600);
+        }
+      }
+      
+      // ホームリンクのhrefを現在のページURLに設定
+      $("#home-link").attr("href", CURRENT_PAGE_URL);
+
+      // ===== QRコードリーダーの初期化 =====
+      const qrReaderElement = document.getElementById("qr-reader");
+      const startButton = document.getElementById("start-qr-reader");
+      let isScanning = false;
+
+      if (!qrReaderElement || !startButton) return;
+
+      const html5QrCode = new Html5Qrcode("qr-reader");
+
+      // カメラを停止する共通処理
+      const stopScanning = () => {
+        if (!isScanning) return;
+        html5QrCode.stop().then((ignore) => {
+          console.log("QR Code scanning is stopped.");
+          $("#qr-reader").slideUp();
+          $(startButton).text("QRコードを読み取る").removeClass("scanning").prop('disabled', false);
+          isScanning = false;
+        }).catch((err) => {
+          console.error("Failed to stop QR Code scanning.", err);
+          // エラーが発生してもUIを元に戻す
+          $("#qr-reader").slideUp();
+          $(startButton).text("QRコードを読み取る").removeClass("scanning").prop('disabled', false);
+          isScanning = false;
+        });
+      };
+
+      const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        // 読み取り成功時の処理
+        console.log(`Code matched = ${decodedText}`, decodedResult);
+        stopScanning(); // カメラを停止
+
+        // URLからパラメータを抽出してページをリロード
+        try {
+          const url = new URL(decodedText);
+          const code = url.searchParams.get(QUERY_PARAM_CODE);
+          const reset = url.searchParams.get(QUERY_PARAM_RESET);
+
+          if (code) {
+            window.location.href = `${CURRENT_PAGE_URL}?${QUERY_PARAM_CODE}=${encodeURIComponent(code)}`;
+          } else if (reset) {
+            window.location.href = `${CURRENT_PAGE_URL}?${QUERY_PARAM_RESET}=${encodeURIComponent(reset)}`;
+          } else {
+            showMessage("このQRコードには有効なスタンプ情報が含まれていません。", "warning");
+          }
+        } catch (e) {
+          showMessage("無効なQRコードです。", "warning");
+        }
+      };
+
+      /*
+      window.addEventListener("resize", () => {
+        const current = document.getElementById("marquee1")?.textContent ?? "";
+        if (current) setMarquee(current, MARQUEE_SPEED_SEC);
+      });
+      */
+      $(startButton).on('click', function () {
+        if (isScanning) {
+          // スキャン中にボタンが押されたら、スキャンを停止する
+          stopScanning();
+        } else {
+          // スキャンを開始する
+          isScanning = true;
+          $(this).text("カメラを閉じる").addClass("scanning").prop('disabled', false);
+          $("#qr-reader").slideDown();
+          html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, qrCodeSuccessCallback)
+            .catch(err => {
+              console.error("Unable to start scanning.", err);
+              showMessage("カメラの起動に失敗しました。", "warning");
+              stopScanning(); // 失敗時もUIを元に戻す
+            });
+        }
+      });
+    });
+  </script>
+</main>
+  <!-- （任意）ここに Google Analytics や gtag.js のスニペットを追加可能 -->
+</body>
+</html>
