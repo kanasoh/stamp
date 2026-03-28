@@ -1,15 +1,44 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>スタンプページ</title>
+  <title>スタンプラリー - QRコード一覧</title>
   <style>
     body {
       font-family: sans-serif;
       margin: 20px;
       background-color: #f5f5f5;
+    }
+    .origin-selector,
+    .link-list {
+      max-width: 1200px;
+      margin: 0 auto 24px;
+      padding: 16px 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .origin-selector h2,
+    .link-list h2 {
+      margin: 0 0 12px 0;
+      font-size: 1rem;
+      color: #333;
+    }
+    .origin-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+    }
+    .origin-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      color: #333;
+    }
+    .origin-option input {
+      margin: 0;
     }
     .stamp-list {
       display: grid;
@@ -18,20 +47,17 @@
       max-width: 1200px;
       margin: 0 auto;
     }
-
-    /* PC（768px以上）では3列固定 */
     @media (min-width: 768px) {
       .stamp-list {
         grid-template-columns: repeat(3, 1fr);
       }
     }
-
     .stamp-item {
       background: white;
       border-radius: 8px;
       padding: 20px;
       text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     .stamp-item h3 {
       margin: 0 0 15px 0;
@@ -62,45 +88,70 @@
     .stamp-item a:hover {
       background-color: #0056b3;
     }
-    .code-value {
-      font-size: 0.8rem;
-      color: #555;
-      word-break: break-all;
-      margin-top: 15px;
-      background: #f8f9fa;
-      padding: 5px;
-      border-radius: 4px;
-    }
+    .code-value,
     .md5-hash {
       font-size: 0.8rem;
       color: #555;
       word-break: break-all;
       margin-top: 5px;
-      background: #eee;
       padding: 5px;
       border-radius: 4px;
+    }
+    .code-value {
+      margin-top: 15px;
+      background: #f8f9fa;
+    }
+    .md5-hash {
+      background: #eee;
+    }
+    .link-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .link-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .link-list a {
+      color: #007bff;
+      text-decoration: none;
+      word-break: break-all;
     }
   </style>
 </head>
 <body>
-
   <h1 style="text-align: center;">スタンプラリー - QRコード一覧</h1>
 
-  <div class="stamp-list" id="stamp-list">
-    <!-- jQueryで動的に生成 -->
+  <div class="origin-selector">
+    <h2>INDEX_URL のベースURL</h2>
+    <div class="origin-options">
+      <label class="origin-option">
+        <input type="radio" name="base-origin" value="https://stamp.ganvalue.com/docs/">
+        <span>https://stamp.ganvalue.com/docs/</span>
+      </label>
+      <label class="origin-option">
+        <input type="radio" name="base-origin" value="https://kanasoh.github.io/stamp/">
+        <span>https://kanasoh.github.io/stamp/</span>
+      </label>
+    </div>
+    <p id="index-url-preview" style="margin: 12px 0 0; font-size: 0.9rem; color: #555; word-break: break-all;"></p>
   </div>
 
-  <p style="text-align: center; margin-top: 30px;">上記のQRコードを読み取るか、リンクをクリックしてスタンプを獲得してください。</p>
+  <div class="stamp-list" id="stamp-list"></div>
+
+  <p style="text-align: center; margin-top: 30px;">
+    上記のQRコードを読み取るか、リンクをクリックしてスタンプを獲得してください。
+  </p>
 
   <p style="text-align: center; margin-top: 30px; font-size: 0.9rem;">
     <a id="reset-link" href="#" style="color: #666; text-decoration: underline;">スタンプをリセット</a>
   </p>
 
-  <!-- jQuery（CDN） -->
+  <div id="generated-link-list" class="link-list"></div>
+
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <!-- CryptoJS（MD5用） -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-  <!-- QRコード生成ライブラリ（CDN） -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <script>
@@ -120,45 +171,60 @@
       { number: 13, code: "4a8clo7d1f93" }
     ];
 
-    // 現在のURLを基に、index.htmlへのパスを動的に生成します。
-    const currentPath = window.location.pathname;
-    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-    const INDEX_URL = `${window.location.origin}${basePath}index.html`;
-    const BASE_URL = `${INDEX_URL}?code=`;
-    const RESET_URL = `${INDEX_URL}?reset=true`;
+    const BASE_ORIGIN_OPTIONS = [
+      "https://stamp.ganvalue.com/docs/",
+      "https://kanasoh.github.io/stamp/"
+    ];
 
-    function generateStampItems() {
-      const $container = $("#stamp-list");
-      
-      $.each(STAMPS, function(index, stamp) {
+    const defaultOrigin = BASE_ORIGIN_OPTIONS[0];
+
+    function getSelectedOrigin() {
+      return $('input[name="base-origin"]:checked').val() || defaultOrigin;
+    }
+
+    function buildUrls() {
+      const origin = getSelectedOrigin();
+      const INDEX_URL = new URL("index.html", origin).href;
+      return {
+        INDEX_URL,
+        BASE_URL: `${INDEX_URL}?code=`,
+        RESET_URL: `${INDEX_URL}?reset=true`
+      };
+    }
+
+    function findStampHash(code) {
+      if (typeof CryptoJS === "undefined" || !CryptoJS.MD5) return "";
+      return CryptoJS.MD5(String(code)).toString();
+    }
+
+    function renderStampItems() {
+      const { BASE_URL, RESET_URL, INDEX_URL } = buildUrls();
+      const $stampList = $("#stamp-list");
+      const $generatedLinkList = $("#generated-link-list");
+      const $preview = $("#index-url-preview");
+
+      $stampList.empty();
+      $generatedLinkList.empty();
+      $preview.text(`INDEX_URL: ${INDEX_URL}`);
+
+      $.each(STAMPS, function (_, stamp) {
         const url = BASE_URL + stamp.code;
-        
-        // スタンプアイテム作成
         const $item = $("<div>").addClass("stamp-item");
-        
         const $title = $("<h3>").text(`No.${stamp.number}`);
-        
-        const $qrContainer = $("<div>") 
+        const $qrContainer = $("<div>")
           .addClass("qr-code")
           .attr("id", `qr-${stamp.number}`);
-
-        // code値を表示
         const $codeDisplay = $("<div>").addClass("code-value").text("Code: " + stamp.code);
-
-        // MD5ハッシュを計算して表示
-        const md5Hash = CryptoJS.MD5(stamp.code).toString();
-        const $md5Display = $("<div>").addClass("md5-hash").text("MD5: " + md5Hash);
-
+        const $md5Display = $("<div>").addClass("md5-hash").text("MD5: " + findStampHash(stamp.code));
         const $link = $("<a>")
           .attr("href", url)
           .attr("target", "_blank")
           .attr("rel", "noopener")
           .text("リンクで開く");
- 
-        $item.append($title, $qrContainer, $codeDisplay, $md5Display);
-        $container.append($item);
-        
-        // QRコード生成
+
+        $item.append($title, $qrContainer, $codeDisplay, $md5Display, $link);
+        $stampList.append($item);
+
         new QRCode($qrContainer[0], {
           text: url,
           width: 150,
@@ -167,21 +233,22 @@
           colorLight: "#ffffff",
           correctLevel: QRCode.CorrectLevel.H
         });
-        $qrContainer.append($link);
       });
 
-      const $item2 = $("<div>").addClass("stamp-item reset");
-      const $title = $("<h3>").text("スタンプをリセット"); 
-      const $qrContainer = $("<div>").addClass("qr-code").attr("id", "qr-reset");
-      const url = RESET_URL;
+      const $resetItem = $("<div>").addClass("stamp-item reset");
+      const $resetTitle = $("<h3>").text("スタンプをリセット");
+      const $resetQrContainer = $("<div>").addClass("qr-code").attr("id", "qr-reset");
+      const $resetLink = $("<a>")
+        .attr("href", RESET_URL)
+        .attr("target", "_blank")
+        .attr("rel", "noopener")
+        .text("リンクで開く");
 
-      $item2.append($title, $qrContainer);
-      $container.append($item2);
+      $resetItem.append($resetTitle, $resetQrContainer, $resetLink);
+      $stampList.append($resetItem);
 
-      const $link = $("<a>").attr("href", url).attr("target", "_blank").attr("rel", "noopener").text("リンクで開く");
-      
-      new QRCode($qrContainer[0], {
-        text: url,
+      new QRCode($resetQrContainer[0], {
+        text: RESET_URL,
         width: 150,
         height: 150,
         colorDark: "#000000",
@@ -189,68 +256,57 @@
         correctLevel: QRCode.CorrectLevel.H
       });
 
-      $qrContainer.append($link);
-
-      // リセットリンクのURLを動的に設定
       $("#reset-link").attr("href", RESET_URL);
-    }
 
+      const $linkTitle = $("<h2>").text("QRコードリンク一覧");
+      const $linkItems = $("<ul>");
 
-    // 末尾にリセット用（既存フォーマットと同じ構造で追加）
-    (function() {
-
-      generateStampItems();
-
-      // QRコードリンクの一覧をページ下部に表示
-      const $linkList = $("<div>").css({
-        "max-width": "1200px",
-        "margin": "30px auto",
-        "padding": "20px",
-        "background": "white",
-        "border-radius": "8px",
-        "box-shadow": "0 2px 8px rgba(0,0,0,0.1)"
-      });
-
-      const $linkTitle = $("<h2>").text("QRコードリンク一覧").css({
-        "margin-top": "0",
-        "color": "#333"
-      });
-
-      const $linkItems = $("<ul>").css({
-        "list-style": "none",
-        "padding": "0"
-      });
-
-      $.each(STAMPS, function(index, stamp) {
+      $.each(STAMPS, function (_, stamp) {
         const url = BASE_URL + stamp.code;
-        const $li = $("<li>").css({
-          "padding": "8px 0",
-          "border-bottom": "1px solid #eee"
-        });
-        
+        const $li = $("<li>");
         const $a = $("<a>")
           .attr("href", url)
           .attr("target", "_blank")
           .attr("rel", "noopener")
-          // .text(`No.${stamp.number}: ${url}`)
-          .text(`${url}`)
-          .css({
-            "color": "#007bff",
-            "text-decoration": "none",
-            "word-break": "break-all"
-          });
-        
+          .text(url);
+
         $li.append($a);
         $linkItems.append($li);
       });
 
-      $linkList.append($linkTitle, $linkItems);
-      $("body").append($linkList);
+      $linkItems.append(
+        $("<li>").append(
+          $("<a>")
+            .attr("href", RESET_URL)
+            .attr("target", "_blank")
+            .attr("rel", "noopener")
+            .text(RESET_URL)
+        )
+      );
 
-    })();
+      $generatedLinkList.append($linkTitle, $linkItems);
 
-    
+      return INDEX_URL;
+    }
+
+    function syncRadioSelection() {
+      const selectedOrigin = getSelectedOrigin();
+      const $radio = $(`input[name="base-origin"][value="${selectedOrigin}"]`);
+      if ($radio.length) {
+        $radio.prop("checked", true);
+      } else {
+        $('input[name="base-origin"]').first().prop("checked", true);
+      }
+    }
+
+    $(function () {
+      syncRadioSelection();
+      renderStampItems();
+
+      $(document).on("change", 'input[name="base-origin"]', function () {
+        renderStampItems();
+      });
+    });
   </script>
-
 </body>
 </html>
