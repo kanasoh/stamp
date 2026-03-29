@@ -5,6 +5,17 @@
   <title>登録会向け スタンプラリー</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
+  <!-- Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-LBQ4PBXTY4"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-LBQ4PBXTY4');
+
+    const ENV = location.hostname.includes('ganvalue') ? 'test' : 'prod';
+  </script>
 </head>
 <body>
 
@@ -308,39 +319,7 @@
     function showMessage(text, type, autoClear = true) {
       // マーキーに統一
       setMarquee(text,MARQUEE_SPEED_SEC);
-      /*
-      const $area = $("#message-area");
-      const $msg = $("<div>")
-        .addClass("message")
-        .addClass(type || "info")
-        .html(text);
-      $area.empty().append($msg);
-
-      // 数秒後に自動で消す（5秒なら 5000）
-      if(autoClear===true){
-        setTimeout(() => {
-          $msg.fadeOut(200, () => $msg.remove());
-        }, 5000);
-      }
-      
-      // URLから ?code=XXXX を削除（リロードなし）
-      const cleanUrl = window.location.pathname + window.location.hash;
-      console.log(cleanUrl);
-      window.history.replaceState({}, document.title, cleanUrl);
-      */
     }
-
-    /*
-    // HTML を受け取るメッセージ（リンク等を挿入する場合に使用）
-    function showHtmlMessage(html, type) {
-      const $area = $("#message-area");
-      const $msg = $("<div>")
-        .addClass("message")
-        .addClass(type || "info")
-        .html(html);
-      $area.empty().append($msg);
-    }
-    */
     /*
      * スタンプの状態を受け取って、スタンプグリッドを再描画します。
       stamps: "0" と "1" の文字列（例: "110010..."）
@@ -521,23 +500,6 @@
      */
     function updateStampCounters(state) {
       const collected = (state.stamps.match(/1/g) || []).length; // 押印数
-      /*
-      const remaining = STAMP_COUNT - collected;               // 残り
-      const $stampMessage = $("#stamp-message .info");
-      const configToShow = REWARD_STATUS_CONFIG.find(config => collected >= config.threshold);
-      const message = configToShow ? configToShow.message : `エラー：キャラクター成長用のメッセージが見つかりません`;
-      $stampMessage.text(message);
-
-      if (remaining === 0) {
-        // すべてのスタンプが揃った場合
-        $stampMessage.text(STAMP_COUNT + "個すべてのスタンプがそろいました！");
-        $stampMessage.text(STAMP_COUNT + "個すべてのスタンプがそろいました！");
-      } else {
-        // まだスタンプが揃っていない場合
-        //$stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
-        $stampMessage.html('スタンプ' + collected + '</span>個押しました！残り' + remaining + '個です。');
-      }
-      */
       // ヘッダーアイコンを更新
       const $iconContainer = $("#reward-status-icon");
       if (!$iconContainer.length) return;
@@ -715,6 +677,17 @@
           } else {
             //showMessage("スタンプGET！「"+STAMP_CONFIGS[index].name + "」を見つけた！", "success");
 
+            // ★ GAイベント送信
+            if (typeof gtag === 'function') {
+              gtag('event', 'stamp_get', {
+                year: 2026,
+                env: ENV, // ←ここで切り替え
+                stamp_name: STAMP_CONFIGS[index].name,
+                stamp_index: index + 1,
+                stamp_count: (state.stamps.match(/1/g) || []).length
+              });
+            }
+
             // ここでマーキー文言を決める
             const collected = (state.stamps.match(/1/g) || []).length;
             const remaining = STAMP_COUNT - collected;
@@ -729,8 +702,18 @@
 
             setMarquee(marqueeMessage, MARQUEE_SPEED_SEC);
 
+            // コンプリートしているかどうかで演出を変える
             let timer = 900;
             if (collected === STAMP_COUNT){
+
+              // ★ GAイベント送信（コンプリート）
+              if (typeof gtag === 'function') {
+                gtag('event', 'stamp_complete', {
+                  year: 2026,
+                  env: ENV,              // ←追加
+                  total: collected
+                });
+              }
               fireSchoolConfetti();// 派手な演出
               timer = 1200;
             } else{
@@ -859,12 +842,6 @@
         }
       };
 
-      /*
-      window.addEventListener("resize", () => {
-        const current = document.getElementById("marquee1")?.textContent ?? "";
-        if (current) setMarquee(current, MARQUEE_SPEED_SEC);
-      });
-      */
       $(startButton).on('click', function () {
         if (isScanning) {
           // スキャン中にボタンが押されたら、スキャンを停止する
